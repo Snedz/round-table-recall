@@ -1,0 +1,2 @@
+memwal>=0.2.3
+requests>=2.31

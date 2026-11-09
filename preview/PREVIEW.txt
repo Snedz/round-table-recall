@@ -1,0 +1,76 @@
+ROUND TABLE RECALL - rough preview  (Mon Nov 9 2026, ~6:36 PM ET, Walrus MAINNET via managed relayer, $0)
+Matches your words: yes. Gap: OpenRouter and opencode Zen free quotas were exhausted tonight, so all 3 seats and the critic failed over to NVIDIA NIM models; no blog, video or web page yet.
+
+=== 2026-11-09 18:33:48 EST | network=mainnet | memory=walrus+jsonl ===
+QUESTION [ff880e2bc6fe]: Why is the sky blue?
+
+Seat weights from memory (before this run): atlas=1.00, vega=0.67, orion=1.00
+
+  [atlas] via nim:stepfun-ai/step-5-preview (129.9s)  critic score: 9.0/10
+     The sky appears blue because sunlight is scattered by molecules in Earth's atmosphere. Shorter blue wavelengths are scattered more strongly than longer red wavelengths—a process called Rayleigh scattering. Because this scattered light reaches our eyes from all directions, the sky looks blue during the day. At sunrise and sunset, sunlight travels through more atmosphere, so blue light is scattered away and the remaini
+     sources: https://spaceplace.nasa.gov/blue-sky/en/, http://hyperphysics.phy-astr.gsu.edu/hbase/atmos/blusky.html, https://www.metoffice.gov.uk/weather/learn-about/weather/optical-effects/why-is-the-sky-blue
+  [vega] via nim:nvidia/nemotron-3.5-lightning-30b-a3b (12.7s)  critic score: 8.0/10
+     Sunlight contains all visible colors. Earth's atmosphere scatters shorter wavelengths (blue, violet) more than longer ones via Rayleigh scattering, filling the sky with blue light reaching our eyes. Violet scatters even more but is less visible to humans.
+     sources: https://science.nasa.gov/ems/06_skycolor, https://www.atmos.washington.edu/~domke/rainbow/rayleigh.html, https://scied.ucar.edu/lessons/sky-color
+  [orion] via nim:minimaxai/minimax-m3.1-flash (74.7s)  critic score: 10.0/10
+     The usual shortcut—“blue light scatters more, so the sky is blue”—is only half true. Air molecules scatter shorter wavelengths much more strongly (Rayleigh scattering, roughly proportional to 1/λ⁴), so violet is actually scattered more than blue. Yet the sky looks blue because the Sun emits more blue than violet, human eyes are more sensitive to blue, and atmospheric absorption removes some violet. The scattered ligh
+     sources: https://spaceplace.nasa.gov/why-is-the-sky-blue/en/, https://scijinks.gov/why-is-the-sky-blue/, https://www.britannica.com/science/Rayleigh-scattering
+
+CRITIC via nim:nvidia/nemotron-3-ultra-550b-a55b: Answer A gives the most complete and physically precise explanation, explicitly resolving the violet-scattering paradox with solar spectrum, eye sensitivity, and atmospheric absorption.
+Source scores: spaceplace.nasa.gov=10, scijinks.gov=10, britannica.com=10, hyperphysics.phy-astr.gsu.edu=10, metoffice.gov.uk=10, science.nasa.gov=10, atmos.washington.edu=10, scied.ucar.edu=10
+WINNER (critic score x remembered weight): orion
+Seat weights after this run: atlas=1.27, vega=0.90, orion=1.33
+
+MEMORY WRITES -> walrus+jsonl: 12/12 done
+  done     blob=mnQrPI3kMl-FNHWE6132V5OSFAaqvMdMKlk91Lc4oGk job=626d1a…e1da47
+  done     blob=y4fxFWOlBIT3JfsexmdmNO4wjHdbfcvcyetWYlzfF78 job=69d4c2…1adaf6
+  done     blob=AutK8CneGtN7mmR99BICeg5Bir30zcTIEJczaMoqVro job=1272c4…4deff4
+  done     blob=D1kbNw_9n7tHr9LySRbgqsh7il4SFa5JgDvS73u4MAQ job=805130…f189f4
+  done     blob=oKUkyM1OuHSssynVW4dVDuvCT9JURj_0zZoPWNuJ6lg job=3ce2ad…b06fc7
+  done     blob=soCFKQBqwjLWem6nDf7gahZDy2fn-wHJOs1HVK0j8lI job=39f61c…d24211
+  done     blob=rnebYl1c8izvIEgcHTrouRrt3NAEVQE-d4fJLVqTIak job=ffa8ce…05d8bf
+  done     blob=m9b9YvIENh41pgfdj6miSqEE7GP54Ja8T0V1RbGApEY job=324ee6…996115
+  done     blob=YaYPTqhojoyPrkHylWh6VFzCq1DcIkKrxMrTpSZBdZY job=70d6f8…d777c9
+  done     blob=ms6h0qRLo_cN37w-kmg6Give3Y4E3mJP6GqsYyJMPw8 job=896a47…a6e56c
+  done     blob=R1y1LLCjg4Ua71SGu3b_WtGbg9r6YpM3qBFXHDTRbdU job=b3cdf0…af9ce3
+  done     blob=LyJv8MxGoiEEJdf-mmS2Z8YpHMgmB3lm5J59Ue49iEo job=385ab8…259fb7
+
+PROOF THE MEMORY EXISTS (mainnet) via Tatum Sui gateway (https://sui-mainnet.gateway.tatum.io/graphql)
+  latest checkpoint : 343523594
+  MemWalAccount     : 0xab914fd1…bdce5e  https://suivision.xyz/object/0xab914fd1…bdce5e
+  type              : 0xe7c16fbe…81d7f5::account::MemWalAccount
+  version / digest  : 1074813417 / 6SyEsc9DvP538QNDcMDLbdDs5JPZ2QhLRBeWVZ18YvMC
+  owner             : 0xc340cc68…1a0f83   active=True
+  delegate keys     : 1
+  Walrus Blob objects owned by owner: 15
+    0x04b03490…901ae5 blob=ms6h0qRLo_cN37w-kmg6Give3Y4E3mJP6GqsYyJMPw8 size=414
+    0x0d8505cc…10e055 blob=soCFKQBqwjLWem6nDf7gahZDy2fn-wHJOs1HVK0j8lI size=408
+    0x17997e62…88f16c blob=y4fxFWOlBIT3JfsexmdmNO4wjHdbfcvcyetWYlzfF78 size=514
+    0x391eb8c8…d3bf11 blob=mnQrPI3kMl-FNHWE6132V5OSFAaqvMdMKlk91Lc4oGk size=501
+    0x4b37a16a…9b3e54 blob=D1kbNw_9n7tHr9LySRbgqsh7il4SFa5JgDvS73u4MAQ size=413
+    0x54320065…4f42dd blob=YaYPTqhojoyPrkHylWh6VFzCq1DcIkKrxMrTpSZBdZY size=410
+    0x58a3e128…abffa1 blob=AutK8CneGtN7mmR99BICeg5Bir30zcTIEJczaMoqVro size=505
+    0x5b75f9d6…dc9424 blob=rnebYl1c8izvIEgcHTrouRrt3NAEVQE-d4fJLVqTIak size=423
+    0x8f661fe4…e0dc8b blob=ueC1Pj71yLGtBV2_saRu-S8LF8I5xlPSZuSd3qrHHQ8 size=512
+    0x952215f9…2b19cc blob=LyJv8MxGoiEEJdf-mmS2Z8YpHMgmB3lm5J59Ue49iEo size=467
+    0xb19189bb…e9e96a blob=R1y1LLCjg4Ua71SGu3b_WtGbg9r6YpM3qBFXHDTRbdU size=408
+    0xb65541d3…159a15 blob=IcLwVidwl4jl3x5FoFbD9QpC09IzUudNImQ8BeS5T-M size=464
+
+15 memories recalled
+SEATS
+  orion                                            n=1   mean=10.0 weight=1.33
+  atlas                                            n=1   mean= 9.0 weight=1.27
+  vega                                             n=2   mean= 4.0 weight=0.90
+MODELS (route that actually answered)
+  nim:minimaxai/minimax-m3.1-flash                 n=1   mean=10.0 weight=1.33
+  nim:stepfun-ai/step-5-preview                    n=1   mean= 9.0 weight=1.27
+  nim:nvidia/nemotron-3.5-lightning-30b-a3b        n=2   mean= 4.0 weight=0.90
+SOURCES
+  scijinks.gov                                     n=1   mean=10.0 weight=1.33
+  spaceplace.nasa.gov                              n=1   mean=10.0 weight=1.33
+  atmos.washington.edu                             n=1   mean=10.0 weight=1.33
+  hyperphysics.phy-astr.gsu.edu                    n=1   mean=10.0 weight=1.33
+  scied.ucar.edu                                   n=1   mean=10.0 weight=1.33
+  britannica.com                                   n=1   mean=10.0 weight=1.33
+  metoffice.gov.uk                                 n=1   mean=10.0 weight=1.33
+  science.nasa.gov                                 n=1   mean=10.0 weight=1.33

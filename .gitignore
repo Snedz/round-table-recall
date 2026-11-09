@@ -1,0 +1,11 @@
+# secrets: never commit
+.env
+.env.*
+secrets/
+*.key
+*_private_key*
+# local state
+.rtr/
+__pycache__/
+*.pyc
+.pytest_cache/

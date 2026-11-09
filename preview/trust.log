@@ -1,0 +1,18 @@
+15 memories recalled
+SEATS
+  orion                                            n=1   mean=10.0 weight=1.33
+  atlas                                            n=1   mean= 9.0 weight=1.27
+  vega                                             n=2   mean= 4.0 weight=0.90
+MODELS (route that actually answered)
+  nim:minimaxai/minimax-m3.1-flash                 n=1   mean=10.0 weight=1.33
+  nim:stepfun-ai/step-5-preview                    n=1   mean= 9.0 weight=1.27
+  nim:nvidia/nemotron-3.5-lightning-30b-a3b        n=2   mean= 4.0 weight=0.90
+SOURCES
+  scijinks.gov                                     n=1   mean=10.0 weight=1.33
+  spaceplace.nasa.gov                              n=1   mean=10.0 weight=1.33
+  atmos.washington.edu                             n=1   mean=10.0 weight=1.33
+  hyperphysics.phy-astr.gsu.edu                    n=1   mean=10.0 weight=1.33
+  scied.ucar.edu                                   n=1   mean=10.0 weight=1.33
+  britannica.com                                   n=1   mean=10.0 weight=1.33
+  metoffice.gov.uk                                 n=1   mean=10.0 weight=1.33
+  science.nasa.gov                                 n=1   mean=10.0 weight=1.33
