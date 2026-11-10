@@ -17,7 +17,9 @@ class TatumSuiGrpc:
     def __init__(self, network: str | None = None, timeout: float = 20.0):
         import grpc
         from google.protobuf.descriptor_pool import DescriptorPool
-        from grpc_reflection.v1alpha.proto_reflection_descriptor_database import ProtoReflectionDescriptorDatabase
+        from grpc_reflection.v1alpha.proto_reflection_descriptor_database import (
+            ProtoReflectionDescriptorDatabase,
+        )
 
         self.network = network or config.network()
         self.key = config.get(f"TATUM_API_KEY_{self.network.upper()}")
