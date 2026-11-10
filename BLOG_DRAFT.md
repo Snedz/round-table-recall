@@ -66,7 +66,7 @@ after 1 evening NIM run plus 5 OpenRouter runs. 66 memories on Walrus Mainnet.
 - Run 0: every seat starts at weight 1.00.
 - After the first scored Mainnet run (Mon Nov 9, 6:33 PM ET, all NIM): orion 1.33, atlas 1.27, vega 0.90. Vega had earlier echoed the prompt template and scored 0; memory kept that.
 - After five more runs at 7:02–7:13 PM ET (every seat answered via OpenRouter free): atlas 1.60, orion 1.52, vega 1.38. Source scores now spread (e.g. NASA 8–10, wikipedia ~6, blogs 2–3) instead of all-10.
-- Tatum Sui proof at the same time: MemWalAccount active, **50** Walrus Blob objects owned on Mainnet (undercount: the free Tatum tier returned HTTP 429 mid-paging). After adding 429 backoff (Mon Nov 9, 10:33 PM ET): **66** Blob objects, one per memory.
+- Tatum Sui proof at the same time: MemWalAccount active, **50** Walrus Blob objects owned on Mainnet (undercount: the free Tatum tier returned HTTP 429 mid-paging). After adding 429 backoff (Mon Nov 9, 10:23 PM ET): **66** Blob objects, one per memory.
 
 ## What's next
 The memory layer is a tiny interface (`remember(records)`, `recall()`), so any
