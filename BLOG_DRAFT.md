@@ -36,12 +36,37 @@ every `::blob::Blob` object the owner holds. That shows the memory exists
 independently of the relayer that wrote it.
 
 ## How it learned over time
-<!-- fill with real numbers from `python -m rtr trust` right before publishing -->
-- Run 1: all seats start at weight 1.00.
-- After the first scored run (Mon Nov 9, 6:33 PM ET): orion 1.33, atlas 1.27,
-  vega 0.90. Vega had earlier echoed the prompt template and scored 0, and the
-  memory kept that.
-- After N runs: _table from `rtr trust`_.
+Numbers from `python -m rtr trust` on Mon Nov 9, 7:13 PM ET (America/Toronto),
+after 1 evening NIM run plus 5 OpenRouter runs. 66 memories on Walrus Mainnet.
+
+| Seat  | n | mean score | weight |
+|-------|---|------------|--------|
+| atlas | 6 | 9.0 | 1.60 |
+| orion | 6 | 8.5 | 1.52 |
+| vega  | 7 | 7.4 | 1.38 |
+
+| Model route that answered | n | mean | weight |
+|---------------------------|---|------|--------|
+| openrouter:dots-studio/dots-3-note-preview:free | 5 | 9.0 | 1.57 |
+| openrouter:nvidia/nemotron-3.5-lightning:free | 5 | 8.8 | 1.54 |
+| openrouter:recursive/flint-v1.0:free | 5 | 8.2 | 1.46 |
+| nim:minimaxai/minimax-m3.1-flash | 1 | 10.0 | 1.33 |
+| nim:stepfun-ai/step-5-preview | 1 | 9.0 | 1.27 |
+| nim:nvidia/nemotron-3.5-lightning-30b-a3b | 2 | 4.0 | 0.90 |
+
+| Source domain (top / bottom) | n | mean | weight |
+|------------------------------|---|------|--------|
+| britannica.com | 5 | 9.0 | 1.57 |
+| earthobservatory.nasa.gov | 2 | 9.5 | 1.45 |
+| science.nasa.gov | 2 | 9.5 | 1.45 |
+| en.wikipedia.org | 4 | 6.2 | 1.17 |
+| earthsky.org | 1 | 3.0 | 0.87 |
+| universetoday.com | 1 | 2.0 | 0.80 |
+
+- Run 0: every seat starts at weight 1.00.
+- After the first scored Mainnet run (Mon Nov 9, 6:33 PM ET, all NIM): orion 1.33, atlas 1.27, vega 0.90. Vega had earlier echoed the prompt template and scored 0; memory kept that.
+- After five more runs at 7:02–7:13 PM ET (every seat answered via OpenRouter free): atlas 1.60, orion 1.52, vega 1.38. Source scores now spread (e.g. NASA 8–10, wikipedia ~6, blogs 2–3) instead of all-10.
+- Tatum Sui proof at the same time: MemWalAccount active, **50** Walrus Blob objects owned on Mainnet.
 
 ## What's next
 The memory layer is a tiny interface (`remember(records)`, `recall()`), so any
