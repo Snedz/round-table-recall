@@ -1,0 +1,64 @@
+105 memories recalled; ledger snapshot from 2026-11-09 23:44 EST covering 15 runs
+SEATS
+  atlas                                            n=13  mean= 9.3 weight=1.75
+  orion                                            n=10  mean= 8.8 weight=1.63
+  vega                                             n=14  mean= 8.1 weight=1.55
+MODELS (route that actually answered)
+  nim:nvidia/nemotron-3-ultra-550b-a55b            n=4   mean= 9.8 weight=1.63
+  openrouter:dots-studio/dots-3-note-preview:free  n=6   mean= 9.2 weight=1.62
+  nim:stepfun-ai/step-5-preview                    n=5   mean= 9.2 weight=1.60
+  openrouter:nvidia/nemotron-3.5-lightning:free    n=6   mean= 9.0 weight=1.60
+  nim:minimaxai/minimax-m3.1-flash                 n=4   mean= 9.2 weight=1.57
+  openrouter:recursive/flint-v1.0:free             n=6   mean= 8.5 weight=1.52
+  nim:nvidia/nemotron-3.5-lightning-30b-a3b        n=6   mean= 6.8 weight=1.27
+SOURCES
+  britannica.com                                   n=7   mean= 9.1 weight=1.64
+  earthobservatory.nasa.gov                        n=3   mean= 9.3 weight=1.52
+  ncbi.nlm.nih.gov                                 n=2   mean=10.0 weight=1.50
+  nasa.gov                                         n=3   mean= 9.0 weight=1.48
+  nca.gov.au                                       n=2   mean= 9.5 weight=1.45
+  science.nasa.gov                                 n=2   mean= 9.5 weight=1.45
+  australia.gov.au                                 n=2   mean= 9.0 weight=1.40
+  esa.int                                          n=2   mean= 9.0 weight=1.40
+  atmos.washington.edu                             n=1   mean=10.0 weight=1.33
+  hyperphysics.phy-astr.gsu.edu                    n=1   mean=10.0 weight=1.33
+  metoffice.gov.uk                                 n=1   mean=10.0 weight=1.33
+  ninds.nih.gov                                    n=1   mean=10.0 weight=1.33
+  pubmed.ncbi.nlm.nih.gov                          n=1   mean=10.0 weight=1.33
+  scied.ucar.edu                                   n=1   mean=10.0 weight=1.33
+  scijinks.gov                                     n=1   mean=10.0 weight=1.33
+  spaceplace.nasa.gov                              n=1   mean=10.0 weight=1.33
+  mayoclinic.org                                   n=2   mean= 8.0 weight=1.30
+  aph.gov.au                                       n=1   mean= 9.0 weight=1.27
+  earth.nasa.gov                                   n=1   mean= 9.0 weight=1.27
+  niams.nih.gov                                    n=1   mean= 9.0 weight=1.27
+  nssdc.gsfc.nasa.gov                              n=1   mean= 9.0 weight=1.27
+  pnas.org                                         n=1   mean= 9.0 weight=1.27
+  sciencedirect.com                                n=1   mean= 9.0 weight=1.27
+  solarsystem.nasa.gov                             n=1   mean= 9.0 weight=1.27
+  usgs.gov                                         n=1   mean= 9.0 weight=1.27
+  health.harvard.edu                               n=2   mean= 7.5 weight=1.25
+  scientificamerican.com                           n=2   mean= 7.5 weight=1.25
+  canberra.gov.au                                  n=1   mean= 8.0 weight=1.20
+  climate.gov                                      n=1   mean= 8.0 weight=1.20
+  en.wikipedia.org                                 n=5   mean= 6.4 weight=1.20
+  legislation.gov.au                               n=1   mean= 8.0 weight=1.20
+  nationalcapital.gov.au                           n=1   mean= 8.0 weight=1.20
+  nationalgeographic.com                           n=2   mean= 7.0 weight=1.20
+  noaa.gov                                         n=1   mean= 8.0 weight=1.20
+  physicsworld.com                                 n=1   mean= 8.0 weight=1.20
+  space.com                                        n=2   mean= 7.0 weight=1.20
+  www2.le.ac.uk                                    n=1   mean= 8.0 weight=1.20
+  arthritis.org                                    n=1   mean= 7.0 weight=1.13
+  bbc.com                                          n=1   mean= 7.0 weight=1.13
+  corning.com                                      n=1   mean= 7.0 weight=1.13
+  history.com                                      n=1   mean= 7.0 weight=1.13
+  parliament.gov.au                                n=1   mean= 7.0 weight=1.13
+  smithsonianmag.com                               n=1   mean= 7.0 weight=1.13
+  ucar.edu                                         n=1   mean= 7.0 weight=1.13
+  nps.gov                                          n=1   mean= 7.0 weight=1.13
+  abc.net.au                                       n=1   mean= 6.0 weight=1.07
+  earthsky.org                                     n=2   mean= 4.0 weight=0.90
+  universetoday.com                                n=2   mean= 2.5 weight=0.75
+LEARNING CURVE
+  (no runs yet)

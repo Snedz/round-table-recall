@@ -65,6 +65,10 @@ def http_chat(route: Route, messages: list[dict], max_tokens: int, timeout: floa
     prov = PROVIDERS[route.provider]
     system = {"role": "system", "content": "Output only the final JSON the user asks for. detailed thinking off"}
     body = {"model": route.model, "messages": [system, *messages], "max_tokens": max_tokens, "temperature": 0.3}
+    if route.provider == "nim":
+        # NIM reasoning models otherwise spend the whole token budget thinking and
+        # return no final answer (finish_reason=length, content=null).
+        body["chat_template_kwargs"] = {"enable_thinking": False, "thinking": False}
     r = requests.post(f"{prov.base_url}/chat/completions", headers=prov.headers(), json=body, timeout=timeout)
     if r.status_code != 200:
         raise ProviderUnavailable(f"HTTP {r.status_code} {r.text[:90]}")
@@ -118,10 +122,10 @@ def default_seats() -> tuple[list[Seat], Seat]:
     R = Route
     seats = [
         Seat("atlas", [R("openrouter", "dots-studio/dots-3-note-preview:free"),
-                       R("nim", "mistralai/mistral-large-4-1t-a52b"),
                        R("zen", "glm-5.3-flash-free"),
+                       R("nim", "stepfun-ai/step-5-preview"),
                        R("nim", "nvidia/nemotron-3-ultra-550b-a55b"),
-                       R("nim", "stepfun-ai/step-5-preview")],
+                       R("nim", "mistralai/mistral-large-4-1t-a52b")],
              persona="a methodical encyclopedist who prefers primary sources"),
         Seat("vega", [R("openrouter", "nvidia/nemotron-3.5-lightning:free"),
                       R("zen", "nemotron-3.5-lightning-free"),
@@ -132,7 +136,7 @@ def default_seats() -> tuple[list[Seat], Seat]:
                        R("openrouter", "cohere/north-mini-code:free"),
                        R("zen", "mimo-v2.6-flash-free"),
                        R("nim", "minimaxai/minimax-m3.1-flash"),
-                       R("nim", "mistralai/mistral-large-4-1t-a52b")],
+                       R("nim", "stepfun-ai/step-5-preview")],
              persona="a contrarian who looks for the common misconception"),
     ]
     critic = Seat("critic", [R("openrouter", "nvidia/nemotron-3-ultra-550b-a55b:free"),

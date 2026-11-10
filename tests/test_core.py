@@ -189,3 +189,20 @@ def test_history_is_the_learning_curve():
     recs = [{"kind": "run", "ts": 2.0, "winner": "a", "weights_before": {"a": 1.2}},
             {"kind": "run", "ts": 1.0, "winner": "b", "weights_before": {"a": 1.0}}]
     assert [w["a"] for _, _, w in trust.history(recs)] == [1.0, 1.2]
+
+
+def test_grpc_cross_check():
+    from rtr.sui_grpc import cross_check
+    assert cross_check("7", "abc", {"version": "7", "digest": "abc"})[0]
+    ok, msg = cross_check("7", "abc", {"version": "8", "digest": "abc"})
+    assert not ok and "DO NOT match" in msg
+
+
+def test_low_weight_seat_goes_on_probation(tmp_path):
+    mem = JsonlMemory(tmp_path / "m.jsonl")
+    mem.remember([{"kind": "seat_score", "seat": "s", "route": "nim:x", "score": 0, "ts": float(i)} for i in range(4)])
+    seats = [Seat("s", [Route("nim", "bad"), Route("nim", "good")])]
+    table = RoundTable(seats, Seat("critic", [Route("nim", "critic")]), mem, chat=_fake_chat, rng=random.Random(0))
+    r = table.run("What is the capital of Australia?")
+    assert r.seats[0].route == "nim:good"
+    assert any("on probation" in e for e in r.effects)

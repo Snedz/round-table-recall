@@ -87,7 +87,27 @@ def cmd_proof(args) -> int:
     if not account:
         print("MEMWAL_ACCOUNT_ID missing", file=sys.stderr)
         return 1
-    print(proof_text(TatumSui().proof(account)))
+    p = TatumSui().proof(account)
+    print(proof_text(p))
+    try:
+        from .sui_grpc import TatumSuiGrpc, cross_check
+
+        for attempt in range(4):  # free Tatum plan: 3 requests/s, and the GraphQL paging above just used them
+            time.sleep(1.5 * (attempt + 1))
+            try:
+                g = TatumSuiGrpc()
+                info = g.service_info()
+                ok, msg = cross_check(p.account_version, p.account_digest, g.get_object(account))
+                break
+            except Exception as e:
+                if "429" not in str(e) or attempt == 3:
+                    raise
+        print(f"CROSS-CHECK via Tatum Sui gRPC ({g.target}, chain={info.get('chain')}, "
+              f"checkpoint {info.get('checkpointHeight')}): {msg}")
+    except ImportError:
+        print("CROSS-CHECK via Tatum Sui gRPC skipped (pip install grpcio grpcio-reflection protobuf)")
+    except Exception as e:  # informational; the GraphQL proof above stands on its own
+        print(f"CROSS-CHECK via Tatum Sui gRPC failed: {type(e).__name__}: {str(e)[:160]}")
     return 0
 
 

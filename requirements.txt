@@ -1,2 +1,5 @@
 memwal>=0.2.3
 requests>=2.31
+grpcio>=1.60
+grpcio-reflection>=1.60
+protobuf>=4.25

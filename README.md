@@ -14,6 +14,8 @@ recalls the ledger and prints a `MEMORY CHANGED THIS RUN` block:
 
 - **Model routes with a below-average record get demoted.** A free model the critic
   kept scoring low moves to the back of its seat's failover chain.
+- **A seat with a bad record goes on probation.** If a seat's own weight falls below
+  0.80, its usual first model is swapped for the next one in its chain for that run.
 - **Low-trust sources get named in the prompt.** Domains the critic rated below an
   unknown source are listed for every seat to avoid. The run then reports whether
   any seat still cited them.
@@ -25,6 +27,16 @@ recalls the ledger and prints a `MEMORY CHANGED THIS RUN` block:
 After every Mainnet run the CLI re-reads the owner's Walrus `Blob` objects through
 Tatum and prints a **Tatum receipt**: the blob count before and after the run, and
 whether the increase matches this run's memory writes.
+
+`python -m rtr proof` uses **both Sui interfaces Tatum's gateway exposes**: GraphQL
+(`sui-mainnet.gateway.tatum.io/graphql`, the only interface its `/_methods` lists;
+Sui JSON-RPC there returns 404) for the account and blob objects, and gRPC
+(`sui.rpc.v2.LedgerService` on `sui-mainnet-grpc.gateway.tatum.io`, message types via
+server reflection) to cross-check that the `MemWalAccount` version and digest match.
+
+**Verify it yourself, no trust in this app needed:** the account id is public, so with
+your own free Tatum key run
+`MEMWAL_ACCOUNT_ID=<account id from the submission> TATUM_API_KEY_MAINNET=<your key> python -m rtr proof`.
 
 A **proof panel** reads the `MemWalAccount` object and the Walrus `Blob`
 objects that back each memory through **Tatum's Sui gateway**, so you can see
@@ -49,6 +61,7 @@ question ──► seats (atlas, vega, orion) ──► critic (A/B/C, shuffled)
 - `rtr/roundtable.py`: one round: recall, plan (memory effects), ask, critique, pick, remember (+ snapshot).
 - `rtr/adapters.py`: turns a Borda-style council ranking from another round table into ledger records.
 - `rtr/sui.py`: Tatum Sui GraphQL reads (checkpoint, `MemWalAccount`, owned `::blob::Blob` objects).
+- `rtr/sui_grpc.py`: Tatum Sui gRPC (`LedgerService.GetServiceInfo`, `GetObject`) via reflection, used as a cross-check.
 - `rtr/web.py`: a one-file demo page (stdlib only).
 
 Each memory is one line, `RTR1 {json}`, with `kind` set to `seat_score`, `source_score`, `run` or `ledger`.
@@ -69,7 +82,7 @@ python -m rtr trust                          # track record recalled from Walrus
 python -m rtr proof                          # onchain proof via Tatum
 python -m rtr serve                          # http://127.0.0.1:8787
 python -m rtr --memory jsonl ask ...         # offline: local memory only
-pytest -q                                    # 15 tests, no network
+pytest -q                                    # 18 tests, no network
 ```
 
 ## Reuse (dual use)

@@ -59,6 +59,9 @@ Question: {question}
 {answers}"""
 
 
+PROBATION_BELOW = 0.8
+
+
 @dataclass
 class SeatResult:
     seat: str
@@ -130,13 +133,20 @@ class RoundTable:
         """Let memory change what the table does this run, not just who wins.
 
         1. Model routes with a below-prior record (n >= 2) move to the back of each seat's failover chain.
-        2. Source domains with a below-prior record are named in every answer prompt.
+        2. A seat whose own weight fell below ``PROBATION_BELOW`` is put on probation: its usual first
+           model is swapped for the next one in its chain for this run.
+        3. Source domains with a below-prior record are named in every answer prompt.
         Returns (seats for this run, prompt note, human-readable effects).
         """
         effects: list[str] = []
         demoted = trust.demoted_routes(records)
+        weights = trust.seat_weights(records, [s.id for s in self.seats])
         seats = []
         for s in self.seats:
+            if weights[s.id] < PROBATION_BELOW and len(s.routes) > 1:
+                effects.append(f"seat {s.id} on probation (weight {weights[s.id]:.2f}): "
+                               f"swapped first model {s.routes[0]} for {s.routes[1]}")
+                s = Seat(s.id, s.routes[1:] + s.routes[:1], s.persona)
             keep = [r for r in s.routes if str(r) not in demoted]
             moved = [r for r in s.routes if str(r) in demoted]
             if moved and keep:
@@ -149,8 +159,8 @@ class RoundTable:
         note = ""
         if bad:
             listed = ", ".join(f"{t.key} (mean {t.mean:.1f}, n={t.n})" for t in bad)
-            note = ("\nThe table's memory rates these domains below an unknown source; prefer stronger sources "
-                    f"and cite them only if nothing better exists: {listed}.")
+            note = ("\nThe table's memory rates these domains below an unknown source. Do NOT cite them; "
+                    f"use stronger primary sources instead: {listed}.")
             effects.append(f"told every seat to avoid {len(bad)} low-trust domains: " + ", ".join(t.key for t in bad))
         return seats, note, effects
 
