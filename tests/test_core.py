@@ -133,3 +133,59 @@ def test_tatum_query_retries_on_429(monkeypatch):
     t.key = "test"
     assert t.query("{ ok }") == {"ok": 1}
     assert len(calls) == 3
+
+
+def test_snapshot_keeps_history_past_recall_limit():
+    old = [{"kind": "seat_score", "seat": "a", "route": "nim:x", "score": 9, "ts": float(i)} for i in range(150)]
+    snap = trust.snapshot(old, ts=150.0, runs=150)
+    newer = [{"kind": "seat_score", "seat": "a", "route": "nim:x", "score": 1, "ts": 151.0}]
+    # recall only returns the snapshot plus the newest raw score; nothing older is needed
+    t = trust.seat_tracks([snap] + newer + old[-5:])
+    assert t["a"].n == 151
+    assert abs(t["a"].mean - (9 * 150 + 1) / 151) < 1e-9
+    assert trust.model_tracks([snap])["nim:x"].n == 150
+
+
+def test_latest_snapshot_wins():
+    s1 = trust.snapshot([{"kind": "seat_score", "seat": "a", "score": 2, "ts": 1.0}], ts=1.0)
+    s2 = trust.snapshot([{"kind": "seat_score", "seat": "a", "score": 8, "ts": 1.0},
+                         {"kind": "seat_score", "seat": "a", "score": 8, "ts": 2.0}], ts=2.0)
+    assert trust.seat_tracks([s2, s1])["a"].n == 2
+
+
+def test_memory_changes_routes_and_prompt(tmp_path):
+    seen_prompts = []
+
+    def chat(route, messages, max_tokens, timeout):
+        seen_prompts.append((route.model, messages[0]["content"]))
+        return _fake_chat(route, messages, max_tokens, timeout)
+
+    mem = JsonlMemory(tmp_path / "m.jsonl")
+    mem.remember([{"kind": "seat_score", "seat": "s", "route": "nim:bad", "score": 1, "ts": 1.0},
+                  {"kind": "seat_score", "seat": "s", "route": "nim:bad", "score": 2, "ts": 2.0},
+                  {"kind": "source_score", "domain": "seo-farm.xyz", "score": 1, "ts": 2.0}])
+    seats = [Seat("s", [Route("nim", "bad"), Route("nim", "good")])]
+    table = RoundTable(seats, Seat("critic", [Route("nim", "critic")]), mem, chat=chat, rng=random.Random(0))
+    r = table.run("What is the capital of Australia?")
+    assert r.seats[0].route == "nim:good"  # remembered-bad model was moved behind the good one
+    answer_prompt = next(p for m, p in seen_prompts if m == "good")
+    assert "seo-farm.xyz" in answer_prompt
+    assert any("demoted model nim:bad" in e for e in r.effects)
+    snaps = [x for x in mem.recall() if x["kind"] == "ledger"]
+    assert snaps and snaps[-1]["tallies"]["seat"]["s"][1] == 3
+
+
+def test_council_adapter_feeds_ledger():
+    from rtr.adapters import council_records
+    recs = council_records([("glm", 6), ("qwen", 3), ("gemma", 0)], n_rankers=2, question_id="q",
+                           routes={"glm": "nim:z-ai/glm"}, ts=1.0)
+    assert [r["score"] for r in recs] == [10.0, 5.0, 0.0]
+    w = trust.seat_weights(recs, ["glm", "qwen", "gemma"])
+    assert w["glm"] > w["qwen"] > w["gemma"]
+    assert trust.model_tracks(recs)["nim:z-ai/glm"].n == 1
+
+
+def test_history_is_the_learning_curve():
+    recs = [{"kind": "run", "ts": 2.0, "winner": "a", "weights_before": {"a": 1.2}},
+            {"kind": "run", "ts": 1.0, "winner": "b", "weights_before": {"a": 1.0}}]
+    assert [w["a"] for _, _, w in trust.history(recs)] == [1.0, 1.2]

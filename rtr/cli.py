@@ -11,7 +11,7 @@ from . import config, trust
 from .llm import default_seats
 from .memory import JsonlMemory, MirroredMemory, WalrusMemory
 from .questions import PUBLIC_QUESTIONS
-from .render import proof_text, run_text, tracks_text
+from .render import history_text, proof_text, run_text, tracks_text
 from .roundtable import RoundTable
 
 
@@ -34,6 +34,17 @@ def _log(text: str, log: Path | None) -> None:
             f.write(text + "\n")
 
 
+def _blob_count() -> int | None:
+    """Walrus Blob objects owned by the MemWal account owner, read via Tatum (None if unavailable)."""
+    try:
+        from .sui import TatumSui
+
+        p = TatumSui().proof(config.get("MEMWAL_ACCOUNT_ID") or "")
+        return None if p.errors else p.blob_count
+    except Exception:
+        return None
+
+
 def cmd_ask(args) -> int:
     table = build_table(args.memory)
     log = Path(args.log) if args.log else None
@@ -41,16 +52,31 @@ def cmd_ask(args) -> int:
     for q in qs:
         _log(f"\n=== {time.strftime('%Y-%m-%d %H:%M:%S %Z')} | network={config.network()} "
              f"| memory={table.memory.name} ===", log)
-        _log(run_text(table.run(q)), log)
+        before = _blob_count() if args.memory == "walrus" else None
+        r = table.run(q)
+        _log(run_text(r), log)
+        if before is not None:
+            writes = sum(1 for x in r.receipts if x.status == "done")
+            after = _blob_count()
+            if after is None:
+                _log("TATUM RECEIPT: Blob count unavailable after the run", log)
+            else:
+                verdict = "matches" if after - before == writes else "DOES NOT match (relayer may still be settling)"
+                _log(f"TATUM RECEIPT (Sui Mainnet via Tatum): Walrus Blob objects {before} -> {after} "
+                     f"(+{after - before}); {writes} memory writes this run; {verdict}", log)
     return 0
 
 
 def cmd_trust(args) -> int:
     recs = build_memory(args.memory).recall(limit=100)
-    print(f"{len(recs)} memories recalled")
+    snap = trust.latest_snapshot(recs)
+    print(f"{len(recs)} memories recalled"
+          + (f"; ledger snapshot from {time.strftime('%Y-%m-%d %H:%M %Z', time.localtime(float(snap['ts'])))}"
+             f" covering {snap.get('runs', '?')} runs" if snap else "; no ledger snapshot yet"))
     print(tracks_text("SEATS", trust.seat_tracks(recs)))
     print(tracks_text("MODELS (route that actually answered)", trust.model_tracks(recs)))
     print(tracks_text("SOURCES", trust.source_tracks(recs)))
+    print(history_text(trust.history(recs)))
     return 0
 
 

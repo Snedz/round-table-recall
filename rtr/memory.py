@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Iterable, Protocol
 
 PREFIX = "RTR1 "
+LEDGER_QUERY = "RTR1 kind ledger snapshot tallies running sums counts"
 
 
 def encode(record: dict) -> str:
@@ -135,13 +136,19 @@ class WalrusMemory:
                limit: int = 100) -> list[dict]:
         from memwal import RecallParams
 
-        res = self.client.recall(RecallParams(query=query, limit=limit, namespace=self.namespace))
-        out = []
-        for m in res.results:
-            rec = decode(m.text)
-            if rec:
-                rec.setdefault("_blob_id", m.blob_id)
-                out.append(rec)
+        out: list[dict] = []
+        seen: set[str] = set()
+        # Second, small query so the latest ledger snapshot is always in the set
+        # even when the main query's top-``limit`` is full of raw scores.
+        for q, n in ((query, limit), (LEDGER_QUERY, 5)):
+            res = self.client.recall(RecallParams(query=q, limit=n, namespace=self.namespace))
+            for m in res.results:
+                rec = decode(m.text)
+                key = getattr(m, "blob_id", None) or m.text
+                if rec and key not in seen:
+                    seen.add(key)
+                    rec.setdefault("_blob_id", getattr(m, "blob_id", None))
+                    out.append(rec)
         return out
 
     def stats(self) -> dict:

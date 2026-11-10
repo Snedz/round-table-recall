@@ -25,7 +25,7 @@ from .memory import MemoryBackend, Receipt, now
 
 ANSWER_PROMPT = """You are {persona}, one seat at a research round table.
 Answer the public research question below in at most 120 words.
-Then list up to 3 real sources you rely on, as full URLs.
+Then list up to 3 real sources you rely on, as full URLs.{memory_note}
 Reply with one JSON object only, with two keys: "answer" (your answer as a
 string) and "sources" (a list of URL strings).
 
@@ -84,6 +84,7 @@ class RunResult:
     winner: str | None
     receipts: list[Receipt]
     memory_backend: str
+    effects: list[str] = field(default_factory=list)
 
 
 def question_id(q: str) -> str:
@@ -95,14 +96,14 @@ def domain(url: str) -> str:
     return host[4:] if host.startswith("www.") else host
 
 
-def _ask_seat(seat: Seat, question: str, chat: ChatFn) -> SeatResult:
+def _ask_seat(seat: Seat, question: str, chat: ChatFn, memory_note: str = "") -> SeatResult:
     res = SeatResult(seat=seat.id)
     try:
-        reply = seat.ask([{"role": "user", "content": ANSWER_PROMPT.format(persona=seat.persona,
-                                                                            question=question)}], chat=chat,
+        reply = seat.ask([{"role": "user", "content": ANSWER_PROMPT.format(persona=seat.persona, question=question,
+                                                                            memory_note=memory_note)}], chat=chat,
                          validate=_check_answer)
     except ProviderUnavailable as e:
-        res.error = str(e)[:300]
+        res.error = str(e)[:900]
         return res
     res.route, res.latency_s = str(reply.route), round(reply.latency_s, 1)
     try:
@@ -125,11 +126,44 @@ class RoundTable:
         records = self.memory.recall(limit=100)
         return trust.seat_weights(records, [s.id for s in self.seats]), records
 
+    def plan(self, records: list[dict]) -> tuple[list[Seat], str, list[str]]:
+        """Let memory change what the table does this run, not just who wins.
+
+        1. Model routes with a below-prior record (n >= 2) move to the back of each seat's failover chain.
+        2. Source domains with a below-prior record are named in every answer prompt.
+        Returns (seats for this run, prompt note, human-readable effects).
+        """
+        effects: list[str] = []
+        demoted = trust.demoted_routes(records)
+        seats = []
+        for s in self.seats:
+            keep = [r for r in s.routes if str(r) not in demoted]
+            moved = [r for r in s.routes if str(r) in demoted]
+            if moved and keep:
+                for r in moved:
+                    t = demoted[str(r)]
+                    effects.append(f"seat {s.id}: demoted model {r} to last (remembered mean {t.mean:.1f}, n={t.n})")
+                s = Seat(s.id, keep + moved, s.persona)
+            seats.append(s)
+        bad = trust.distrusted_sources(records)
+        note = ""
+        if bad:
+            listed = ", ".join(f"{t.key} (mean {t.mean:.1f}, n={t.n})" for t in bad)
+            note = ("\nThe table's memory rates these domains below an unknown source; prefer stronger sources "
+                    f"and cite them only if nothing better exists: {listed}.")
+            effects.append(f"told every seat to avoid {len(bad)} low-trust domains: " + ", ".join(t.key for t in bad))
+        return seats, note, effects
+
     def run(self, question: str) -> RunResult:
         qid = question_id(question)
         before, records = self.weights()
-        with ThreadPoolExecutor(max_workers=len(self.seats)) as pool:
-            results = list(pool.map(lambda s: _ask_seat(s, question, self.chat), self.seats))
+        seats, note, effects = self.plan(records)
+        with ThreadPoolExecutor(max_workers=len(seats)) as pool:
+            results = list(pool.map(lambda s: _ask_seat(s, question, self.chat, note), seats))
+        avoided = {t.key for t in trust.distrusted_sources(records)}
+        if avoided:
+            cited_bad = sorted({domain(u) for r in results for u in r.sources} & avoided)
+            effects.append("low-trust domains still cited: " + (", ".join(cited_bad) if cited_bad else "none"))
 
         answered = [r for r in results if r.answer]
         order = answered[:]
@@ -166,13 +200,16 @@ class RoundTable:
             if match:  # only score sources a seat actually cited
                 recs.append({"kind": "source_score", "domain": match, "score": s, "question_id": qid, "ts": ts})
         if scored:
+            prev = trust.latest_snapshot(records)
+            runs = (int(prev.get("runs", 0)) if prev else sum(1 for r in records if r.get("kind") == "run")) + 1
             recs.append({"kind": "run", "question": question, "question_id": qid, "winner": winner,
-                         "weights_before": before, "ts": ts})
+                         "weights_before": before, "effects": effects, "ts": ts})
+            recs.append(trust.snapshot(records + recs, ts, runs))
         receipts = self.memory.remember(recs) if recs else []
 
         after = trust.seat_weights(records + recs, [s.id for s in self.seats])
         return RunResult(question, qid, before, after, results, critic_route, why, src_scores,
-                         winner, receipts, self.memory.name)
+                         winner, receipts, self.memory.name, effects)
 
 
 def _check_answer(text: str) -> None:

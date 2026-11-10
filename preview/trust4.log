@@ -1,0 +1,67 @@
+93 memories recalled; ledger snapshot from 2026-11-09 23:28 EST covering 11 runs
+SEATS
+  atlas                                            n=8   mean= 9.2 weight=1.68
+  orion                                            n=8   mean= 8.8 weight=1.60
+  vega                                             n=10  mean= 7.9 weight=1.48
+MODELS (route that actually answered)
+  openrouter:dots-studio/dots-3-note-preview:free  n=6   mean= 9.2 weight=1.62
+  openrouter:nvidia/nemotron-3.5-lightning:free    n=6   mean= 9.0 weight=1.60
+  openrouter:recursive/flint-v1.0:free             n=6   mean= 8.5 weight=1.52
+  nim:minimaxai/minimax-m3.1-flash                 n=2   mean= 9.5 weight=1.45
+  nim:nvidia/nemotron-3-ultra-550b-a55b            n=1   mean=10.0 weight=1.33
+  nim:stepfun-ai/step-5-preview                    n=1   mean= 9.0 weight=1.27
+  nim:nvidia/nemotron-3.5-lightning-30b-a3b        n=4   mean= 6.2 weight=1.17
+SOURCES
+  britannica.com                                   n=6   mean= 9.0 weight=1.60
+  earthobservatory.nasa.gov                        n=2   mean= 9.5 weight=1.45
+  nca.gov.au                                       n=2   mean= 9.5 weight=1.45
+  science.nasa.gov                                 n=2   mean= 9.5 weight=1.45
+  australia.gov.au                                 n=2   mean= 9.0 weight=1.40
+  nasa.gov                                         n=2   mean= 8.5 weight=1.35
+  atmos.washington.edu                             n=1   mean=10.0 weight=1.33
+  hyperphysics.phy-astr.gsu.edu                    n=1   mean=10.0 weight=1.33
+  metoffice.gov.uk                                 n=1   mean=10.0 weight=1.33
+  ninds.nih.gov                                    n=1   mean=10.0 weight=1.33
+  pubmed.ncbi.nlm.nih.gov                          n=1   mean=10.0 weight=1.33
+  scied.ucar.edu                                   n=1   mean=10.0 weight=1.33
+  scijinks.gov                                     n=1   mean=10.0 weight=1.33
+  spaceplace.nasa.gov                              n=1   mean=10.0 weight=1.33
+  aph.gov.au                                       n=1   mean= 9.0 weight=1.27
+  earth.nasa.gov                                   n=1   mean= 9.0 weight=1.27
+  niams.nih.gov                                    n=1   mean= 9.0 weight=1.27
+  nssdc.gsfc.nasa.gov                              n=1   mean= 9.0 weight=1.27
+  pnas.org                                         n=1   mean= 9.0 weight=1.27
+  solarsystem.nasa.gov                             n=1   mean= 9.0 weight=1.27
+  usgs.gov                                         n=1   mean= 9.0 weight=1.27
+  canberra.gov.au                                  n=1   mean= 8.0 weight=1.20
+  climate.gov                                      n=1   mean= 8.0 weight=1.20
+  en.wikipedia.org                                 n=5   mean= 6.4 weight=1.20
+  esa.int                                          n=1   mean= 8.0 weight=1.20
+  health.harvard.edu                               n=1   mean= 8.0 weight=1.20
+  legislation.gov.au                               n=1   mean= 8.0 weight=1.20
+  mayoclinic.org                                   n=1   mean= 8.0 weight=1.20
+  nationalcapital.gov.au                           n=1   mean= 8.0 weight=1.20
+  nationalgeographic.com                           n=2   mean= 7.0 weight=1.20
+  noaa.gov                                         n=1   mean= 8.0 weight=1.20
+  arthritis.org                                    n=1   mean= 7.0 weight=1.13
+  history.com                                      n=1   mean= 7.0 weight=1.13
+  parliament.gov.au                                n=1   mean= 7.0 weight=1.13
+  space.com                                        n=1   mean= 7.0 weight=1.13
+  ucar.edu                                         n=1   mean= 7.0 weight=1.13
+  abc.net.au                                       n=1   mean= 6.0 weight=1.07
+  scientificamerican.com                           n=1   mean= 6.0 weight=1.07
+  earthsky.org                                     n=1   mean= 3.0 weight=0.87
+  universetoday.com                                n=1   mean= 2.0 weight=0.80
+LEARNING CURVE (seat weights going into each run, recalled from memory)
+  time (local)      atlas   orion   vega    winner
+  11-09 18:28 EST   1.00    1.00    1.00    vega
+  11-09 18:32 EST   1.00    1.00    0.67    None
+  11-09 18:36 EST   1.00    1.00    0.67    orion
+  11-09 19:04 EST   1.27    1.33    0.90    atlas
+  11-09 19:06 EST   1.45    1.35    1.04    atlas
+  11-09 19:08 EST   1.52    1.44    1.20    atlas
+  11-09 19:11 EST   1.57    1.47    1.31    atlas
+  11-09 19:12 EST   1.63    1.49    1.38    orion
+  11-09 22:24 EST   1.60    1.52    1.38    atlas
+  11-09 23:23 EST   1.64    1.58    1.44    orion
+  11-09 23:28 EST   1.64    1.60    1.46    atlas

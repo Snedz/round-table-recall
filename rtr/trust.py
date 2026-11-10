@@ -1,9 +1,15 @@
-"""Trust ledger: turns remembered critic scores into seat and source weights.
+"""Trust ledger: turns remembered critic scores into seat, model and source weights.
 
-Scores are 0-10. Each seat starts from a prior of ``PRIOR_MEAN`` worth
+Scores are 0-10. Each key starts from a prior of ``PRIOR_MEAN`` worth
 ``PRIOR_N`` pseudo-runs, so one lucky answer does not dominate. The weight is
 the posterior mean divided by the prior mean, so an unknown seat weighs 1.00,
 a seat the critic keeps rating 8/10 trends toward 1.6, and a 2/10 seat toward 0.4.
+
+Snapshots: recall returns at most ~100 memories, so a ledger built only from
+raw scores would silently forget its oldest runs. Every run therefore also
+stores one ``ledger`` memory holding the running sums and counts. The ledger
+is rebuilt as *latest snapshot + every raw score newer than it*, so the track
+record stays complete however many memories exist.
 """
 
 from __future__ import annotations
@@ -14,6 +20,9 @@ from dataclasses import dataclass
 PRIOR_MEAN = 5.0
 PRIOR_N = 2.0
 
+# ledger section -> (record kind, record field)
+SECTIONS = {"seat": ("seat_score", "seat"), "route": ("seat_score", "route"), "domain": ("source_score", "domain")}
+
 
 @dataclass
 class Track:
@@ -23,38 +32,95 @@ class Track:
     weight: float
 
 
-def _tracks(records: list[dict], kind: str, field: str) -> dict[str, Track]:
-    sums: dict[str, float] = defaultdict(float)
-    counts: dict[str, int] = defaultdict(int)
+def latest_snapshot(records: list[dict]) -> dict | None:
+    snaps = [r for r in records if r.get("kind") == "ledger" and isinstance(r.get("tallies"), dict)]
+    return max(snaps, key=lambda r: float(r.get("ts", 0))) if snaps else None
+
+
+def tallies(records: list[dict]) -> dict[str, dict[str, list[float]]]:
+    """``{section: {key: [sum, count]}}`` from the latest snapshot plus newer raw scores."""
+    snap = latest_snapshot(records)
+    out: dict[str, dict[str, list[float]]] = {s: defaultdict(lambda: [0.0, 0]) for s in SECTIONS}
+    cutoff = float("-inf")
+    if snap:
+        cutoff = float(snap.get("ts", 0))
+        for sec, rows in snap["tallies"].items():
+            if sec in out and isinstance(rows, dict):
+                for k, v in rows.items():
+                    try:
+                        out[sec][k] = [float(v[0]), int(v[1])]
+                    except (TypeError, ValueError, IndexError):
+                        continue
     for r in records:
-        if r.get("kind") != kind or field not in r:
-            continue
         try:
-            s = float(r["score"])
-        except (KeyError, TypeError, ValueError):
+            ts = float(r.get("ts", 0))
+        except (TypeError, ValueError):
+            ts = 0.0
+        if snap and ts <= cutoff:
             continue
-        s = max(0.0, min(10.0, s))
-        sums[r[field]] += s
-        counts[r[field]] += 1
+        for sec, (kind, field) in SECTIONS.items():
+            if r.get("kind") != kind or not r.get(field):
+                continue
+            try:
+                s = max(0.0, min(10.0, float(r["score"])))
+            except (KeyError, TypeError, ValueError):
+                continue
+            t = out[sec][r[field]]
+            t[0] += s
+            t[1] += 1
+    return {s: dict(v) for s, v in out.items()}
+
+
+def snapshot(records: list[dict], ts: float, runs: int | None = None) -> dict:
+    """A ``ledger`` memory summarizing everything in ``records`` up to ``ts``."""
+    t = tallies(records)
+    rows = {sec: {k: [round(v[0], 3), int(v[1])] for k, v in d.items() if v[1]} for sec, d in t.items()}
+    snap = {"kind": "ledger", "tallies": rows, "ts": ts}
+    if runs is not None:
+        snap["runs"] = runs
+    return snap
+
+
+def _tracks(records: list[dict], section: str) -> dict[str, Track]:
     out = {}
-    for k in counts:
-        post = (PRIOR_MEAN * PRIOR_N + sums[k]) / (PRIOR_N + counts[k])
-        out[k] = Track(k, counts[k], sums[k] / counts[k], round(post / PRIOR_MEAN, 3))
+    for k, (total, n) in tallies(records)[section].items():
+        if not n:
+            continue
+        post = (PRIOR_MEAN * PRIOR_N + total) / (PRIOR_N + n)
+        out[k] = Track(k, int(n), total / n, round(post / PRIOR_MEAN, 3))
     return out
 
 
 def seat_tracks(records: list[dict]) -> dict[str, Track]:
-    return _tracks(records, "seat_score", "seat")
+    return _tracks(records, "seat")
 
 
 def model_tracks(records: list[dict]) -> dict[str, Track]:
-    return _tracks(records, "seat_score", "route")
+    return _tracks(records, "route")
 
 
 def source_tracks(records: list[dict]) -> dict[str, Track]:
-    return _tracks(records, "source_score", "domain")
+    return _tracks(records, "domain")
 
 
 def seat_weights(records: list[dict], seat_ids: list[str]) -> dict[str, float]:
     t = seat_tracks(records)
     return {s: (t[s].weight if s in t else 1.0) for s in seat_ids}
+
+
+def distrusted_sources(records: list[dict], below: float = 1.0, limit: int = 8) -> list[Track]:
+    """Source domains whose remembered record is worse than an unknown source."""
+    rows = [t for t in source_tracks(records).values() if t.weight < below]
+    return sorted(rows, key=lambda t: t.weight)[:limit]
+
+
+def demoted_routes(records: list[dict], below: float = 1.0, min_n: int = 2) -> dict[str, Track]:
+    """Model routes with at least ``min_n`` scores whose record is worse than an unknown model."""
+    return {k: t for k, t in model_tracks(records).items() if t.n >= min_n and t.weight < below}
+
+
+def history(records: list[dict]) -> list[tuple[float, str, dict[str, float]]]:
+    """``(ts, winner, seat weights going into that run)`` for every remembered run, oldest first."""
+    runs = [r for r in records if r.get("kind") == "run" and isinstance(r.get("weights_before"), dict)]
+    return [(float(r.get("ts", 0)), str(r.get("winner")), r["weights_before"])
+            for r in sorted(runs, key=lambda r: float(r.get("ts", 0)))]

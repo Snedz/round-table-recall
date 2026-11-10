@@ -8,7 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs
 
 from . import config, trust
-from .render import proof_text, run_text, tracks_text
+from .render import history_text, proof_text, run_text, tracks_text
 from .roundtable import RoundTable
 
 PAGE = """<!doctype html><meta charset=utf-8><title>Round Table Recall</title>
@@ -29,7 +29,8 @@ def serve(table: RoundTable, port: int = 8787) -> None:
         def _page(self) -> None:
             recs = table.memory.recall(limit=100)
             tracks = "\n".join([tracks_text("SEATS", trust.seat_tracks(recs)),
-                                tracks_text("SOURCES", trust.source_tracks(recs))])
+                                tracks_text("SOURCES", trust.source_tracks(recs)),
+                                history_text(trust.history(recs))])
             try:
                 from .sui import TatumSui
                 proof = proof_text(TatumSui().proof(config.get("MEMWAL_ACCOUNT_ID") or ""))

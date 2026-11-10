@@ -14,7 +14,11 @@ def short(x: str, n: int = 10) -> str:
 def run_text(r: RunResult) -> str:
     out = [f"QUESTION [{r.question_id}]: {r.question}", "",
            "Seat weights from memory (before this run): "
-           + ", ".join(f"{k}={v:.2f}" for k, v in r.weights_before.items()), ""]
+           + ", ".join(f"{k}={v:.2f}" for k, v in r.weights_before.items())]
+    if r.effects:
+        out.append("MEMORY CHANGED THIS RUN:")
+        out += [f"  - {e}" for e in r.effects]
+    out.append("")
     for s in r.seats:
         if s.error:
             out.append(f"  [{s.seat}] FAILED on every route:")
@@ -58,4 +62,18 @@ def proof_text(p: Proof) -> str:
         lines.append(f"    {short(b['object_id'])} blob={b['blob_id']} size={b['size']}")
     for e in p.errors:
         lines.append(f"  ! {e}")
+    return "\n".join(lines)
+
+
+def history_text(rows) -> str:
+    """Seat weights going into each remembered run: the learning curve."""
+    import time as _t
+    if not rows:
+        return "LEARNING CURVE\n  (no runs yet)"
+    seats = sorted({k for _, _, w in rows for k in w})
+    lines = ["LEARNING CURVE (seat weights going into each run, recalled from memory)",
+             "  " + "time (local)".ljust(18) + "".join(s.ljust(8) for s in seats) + "winner"]
+    for ts, winner, w in rows:
+        lines.append("  " + _t.strftime("%m-%d %H:%M %Z", _t.localtime(ts)).ljust(18)
+                     + "".join(f"{w.get(s, 1.0):<8.2f}" for s in seats) + winner)
     return "\n".join(lines)

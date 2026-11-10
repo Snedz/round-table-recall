@@ -9,6 +9,23 @@ score becomes a memory on Walrus. The next run recalls those memories, weights
 the seats by their record, and picks the answer with the best
 `critic score x remembered weight`. The weights change visibly from run to run.
 
+Memory also changes **what the table does**, not only who wins. Before each run it
+recalls the ledger and prints a `MEMORY CHANGED THIS RUN` block:
+
+- **Model routes with a below-average record get demoted.** A free model the critic
+  kept scoring low moves to the back of its seat's failover chain.
+- **Low-trust sources get named in the prompt.** Domains the critic rated below an
+  unknown source are listed for every seat to avoid. The run then reports whether
+  any seat still cited them.
+- **The ledger never forgets.** Each run also stores one `ledger` snapshot memory
+  (running sums and counts per seat, model and domain). The track record is
+  rebuilt from *latest snapshot + newer scores*, so it stays complete well past the
+  100-result recall window.
+
+After every Mainnet run the CLI re-reads the owner's Walrus `Blob` objects through
+Tatum and prints a **Tatum receipt**: the blob count before and after the run, and
+whether the increase matches this run's memory writes.
+
 A **proof panel** reads the `MemWalAccount` object and the Walrus `Blob`
 objects that back each memory through **Tatum's Sui gateway**, so you can see
 the memory exists onchain without trusting this app.
@@ -28,12 +45,13 @@ question ──► seats (atlas, vega, orion) ──► critic (A/B/C, shuffled)
 
 - `rtr/llm.py`: seats as chains of OpenAI-compatible routes, so one exhausted free tier never empties a seat. The route that actually answered is stored with each score.
 - `rtr/memory.py`: `MemoryBackend` interface with `JsonlMemory` (local), `WalrusMemory` (official `memwal` SDK, managed relayer) and `MirroredMemory` (Walrus plus a local mirror).
-- `rtr/trust.py`: Bayesian track record (prior 5/10 worth 2 runs). A new seat weighs 1.00. A seat that keeps scoring 9 trends toward 1.8, and one that keeps scoring 1 trends toward 0.2.
-- `rtr/roundtable.py`: one round: recall, ask, critique, pick, remember.
+- `rtr/trust.py`: Bayesian track record (prior 5/10 worth 2 runs). A new seat weighs 1.00. A seat that keeps scoring 9 trends toward 1.8, and one that keeps scoring 1 trends toward 0.2. Ledger snapshots, demoted routes, distrusted sources.
+- `rtr/roundtable.py`: one round: recall, plan (memory effects), ask, critique, pick, remember (+ snapshot).
+- `rtr/adapters.py`: turns a Borda-style council ranking from another round table into ledger records.
 - `rtr/sui.py`: Tatum Sui GraphQL reads (checkpoint, `MemWalAccount`, owned `::blob::Blob` objects).
 - `rtr/web.py`: a one-file demo page (stdlib only).
 
-Each memory is one line, `RTR1 {json}`, with `kind` set to `seat_score`, `source_score` or `run`.
+Each memory is one line, `RTR1 {json}`, with `kind` set to `seat_score`, `source_score`, `run` or `ledger`.
 
 ## Run it
 
@@ -51,16 +69,18 @@ python -m rtr trust                          # track record recalled from Walrus
 python -m rtr proof                          # onchain proof via Tatum
 python -m rtr serve                          # http://127.0.0.1:8787
 python -m rtr --memory jsonl ask ...         # offline: local memory only
-pytest -q
+pytest -q                                    # 15 tests, no network
 ```
 
 ## Reuse (dual use)
 
 `MemoryBackend` and the trust ledger don't depend on the question format.
 Any loop that can emit `{"kind": "seat_score", "seat": ..., "score": ...}`
-records gets a cross-run track record for free. Two examples are a multi-model
-planning council, and a plan, critique, build, review loop that wants to know
-which reviewer models were right last time.
+records gets a cross-run track record for free. `rtr.adapters.council_records`
+already converts an llm-council style peer ranking (answers, anonymized ranking,
+chairman) into ledger records. Other examples are a plan, critique, build,
+review loop that wants to know which reviewer models were right last time, or a
+deadline tracker that remembers which kinds of deadline it let slip.
 
 ## Data rules
 
