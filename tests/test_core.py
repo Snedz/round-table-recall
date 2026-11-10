@@ -90,3 +90,20 @@ def test_walrus_backend_with_sdk_mock(tmp_path):
 def test_domain_and_blob_id():
     assert domain("https://www.britannica.com/x") == "britannica.com"
     assert len(blob_id_from_u256(12345)) == 43
+
+
+def test_critic_rejects_flat_source_scores():
+    from rtr.roundtable import _check_critic
+    with pytest.raises(ValueError, match="too flat"):
+        _check_critic({"scores": {"A": 8}, "sources": {"a.com": 10, "b.com": 10}}, ["A"])
+    _check_critic({"scores": {"A": 8}, "sources": {"a.com": 9, "b.com": 6}}, ["A"])  # spread ok
+
+
+def test_calibrate_source_scores_spreads_flat():
+    from rtr.roundtable import calibrate_source_scores
+    flat = {"nasa.gov": 10.0, "random-blog.xyz": 10.0, "britannica.com": 10.0}
+    out = calibrate_source_scores(flat)
+    assert max(out.values()) - min(out.values()) >= 2
+    assert out["nasa.gov"] > out["random-blog.xyz"]
+    already = {"nasa.gov": 9.0, "blog.xyz": 3.0}
+    assert calibrate_source_scores(already) == already

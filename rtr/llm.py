@@ -112,12 +112,13 @@ def default_seats() -> tuple[list[Seat], Seat]:
 
     Every seat fails over across providers, so one exhausted free tier does
     not take a seat off the table. The route that actually answered is
-    recorded with each memory.
+    recorded with each memory. OpenRouter :free model IDs are the ones that
+    answered live on 2026-11-09 evening (gemma-4 :free was 429).
     """
     R = Route
     seats = [
-        Seat("atlas", [R("nim", "mistralai/mistral-large-4-1t-a52b"),
-                       R("openrouter", "google/gemma-4-31b-it:free"),
+        Seat("atlas", [R("openrouter", "dots-studio/dots-3-note-preview:free"),
+                       R("nim", "mistralai/mistral-large-4-1t-a52b"),
                        R("zen", "glm-5.3-flash-free"),
                        R("nim", "stepfun-ai/step-5-preview")],
              persona="a methodical encyclopedist who prefers primary sources"),
@@ -126,12 +127,14 @@ def default_seats() -> tuple[list[Seat], Seat]:
                       R("nim", "nvidia/nemotron-3.5-lightning-30b-a3b"),
                       R("nim", "stepfun-ai/step-5-preview")],
              persona="a fast fact-checker who answers briefly"),
-        Seat("orion", [R("zen", "mimo-v2.6-flash-free"),
-                       R("openrouter", "google/gemma-4-26b-a4b-it:free"),
+        Seat("orion", [R("openrouter", "recursive/flint-v1.0:free"),
+                       R("openrouter", "cohere/north-mini-code:free"),
+                       R("zen", "mimo-v2.6-flash-free"),
                        R("nim", "minimaxai/minimax-m3.1-flash")],
              persona="a contrarian who looks for the common misconception"),
     ]
     critic = Seat("critic", [R("openrouter", "nvidia/nemotron-3-ultra-550b-a55b:free"),
+                             R("openrouter", "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"),
                              R("nim", "nvidia/nemotron-3-ultra-550b-a55b"),
                              R("nim", "stepfun-ai/step-5-preview"),
                              R("zen", "big-pickle")],

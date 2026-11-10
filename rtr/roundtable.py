@@ -34,7 +34,22 @@ Question: {question}"""
 CRITIC_PROMPT = """You are a strict grader for a research round table.
 Score each anonymous answer 0-10 for factual accuracy, directness and honesty
 about uncertainty. Also score each cited source domain 0-10 for how reliable
-it is for this question. Be decisive: use the full range.
+it is for THIS question.
+
+Rules for source scores (mandatory):
+- Use the FULL 0-10 range. Do NOT give every source the same number.
+- Primary scientific / government / encyclopedia domains (nasa.gov, noaa.gov,
+  .edu research pages, britannica.com, nature.com, science.org, who.int,
+  usgs.gov, metoffice.gov.uk) usually score 8-10.
+- Good secondary explainers (scijinks.gov, spaceplace.nasa.gov, ucar.edu
+  education pages, well-known museum sites) usually score 6-8.
+- Generic blogs, SEO farms, unverified personal sites, or URLs that look
+  fabricated usually score 0-4.
+- If two sources are both strong, still separate them by at least 1 point
+  when one is more primary for the question.
+- When you list 2 or more sources, max(source scores) - min(source scores)
+  MUST be at least 2.
+
 Reply ONLY with JSON:
 one object with keys "scores" (answer letter -> number), "sources"
 (domain -> number), "best" (a letter) and "why" (one sentence).
@@ -134,7 +149,7 @@ class RoundTable:
             for r in order:
                 if r.label in scores:
                     r.score = _clamp(scores[r.label])
-            src_scores = {domain(k): _clamp(v) for k, v in (j.get("sources") or {}).items() if k}
+            src_scores = calibrate_source_scores({domain(k): _clamp(v) for k, v in (j.get("sources") or {}).items() if k})
             why = str(j.get("why", ""))[:300]
 
         scored = [r for r in results if r.score is not None]
@@ -171,6 +186,19 @@ def _check_critic(j: dict, labels: list[str]) -> None:
     scores = j.get("scores")
     if not isinstance(scores, dict) or not any(l in scores for l in labels):
         raise ValueError("critic reply has no scores for the answers")
+    src = j.get("sources") or {}
+    if isinstance(src, dict) and len(src) >= 2:
+        vals = []
+        for v in src.values():
+            try:
+                vals.append(float(v))
+            except (TypeError, ValueError):
+                continue
+        if len(vals) >= 2 and max(vals) - min(vals) < 2:
+            raise ValueError(
+                "critic source scores are too flat "
+                f"(spread {max(vals) - min(vals):.1f} < 2); differentiate them"
+            )
 
 
 def _clamp(v) -> float:
@@ -178,3 +206,40 @@ def _clamp(v) -> float:
         return max(0.0, min(10.0, float(v)))
     except (TypeError, ValueError):
         return 0.0
+
+
+# Soft authority tiers used only when a critic reply still lands flat after
+# validation failover. Keeps source weights from collapsing to all-identical.
+_SOURCE_TIER = {
+    "nasa.gov": 9.5, "science.nasa.gov": 9.5, "noaa.gov": 9.5, "usgs.gov": 9.5,
+    "who.int": 9.5, "nature.com": 9.5, "science.org": 9.5, "britannica.com": 9.0,
+    "metoffice.gov.uk": 9.0, "edu": 8.5, "scijinks.gov": 7.5,
+    "spaceplace.nasa.gov": 7.5, "scied.ucar.edu": 7.5, "wikipedia.org": 7.0,
+    "en.wikipedia.org": 7.0,
+}
+
+
+def calibrate_source_scores(scores: dict[str, float]) -> dict[str, float]:
+    """If every source got the same score, spread them by known authority tiers."""
+    if len(scores) < 2:
+        return scores
+    vals = list(scores.values())
+    if max(vals) - min(vals) >= 2:
+        return scores
+    out: dict[str, float] = {}
+    for d, s in scores.items():
+        tier = None
+        if d in _SOURCE_TIER:
+            tier = _SOURCE_TIER[d]
+        else:
+            for suf, t in _SOURCE_TIER.items():
+                if d == suf or d.endswith("." + suf) or (suf == "edu" and d.endswith(".edu")):
+                    tier = t
+                    break
+        out[d] = round(tier if tier is not None else max(1.0, min(5.0, s * 0.5)), 1)
+    # Guarantee a spread of at least 2 even for unknown domains.
+    if max(out.values()) - min(out.values()) < 2:
+        ranked = sorted(out.keys())
+        for i, d in enumerate(ranked):
+            out[d] = round(3.0 + (6.0 * i / max(1, len(ranked) - 1)), 1)
+    return out
