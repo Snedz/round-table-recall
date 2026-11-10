@@ -1,5 +1,7 @@
 # Demo script (2.5 min, screen recording, captions; voice optional)
 
+The submitted video (2:24) was rendered from the real run logs in `preview/` (slides, local Piper TTS narration, burned-in captions). This script is for a live re-record.
+
 | t | Screen | Say / caption |
 |---|---|---|
 | 0:00-0:15 | README diagram | "Round Table Recall: three free AI models answer, a critic grades them, and Walrus Memory remembers who was right." |

@@ -16,9 +16,10 @@ recalls the ledger and prints a `MEMORY CHANGED THIS RUN` block:
   kept scoring low moves to the back of its seat's failover chain.
 - **A seat with a bad record goes on probation.** If a seat's own weight falls below
   0.80, its usual first model is swapped for the next one in its chain for that run.
-- **Low-trust sources get named in the prompt.** Domains the critic rated below an
-  unknown source are listed for every seat to avoid. The run then reports whether
-  any seat still cited them.
+- **Low-trust sources get named in the prompt, and removed if cited anyway.** Domains
+  the critic rated below an unknown source are listed for every seat to avoid. Any
+  that a seat still cites are stripped from its answer before the critic grades it,
+  and the run says which seat did it.
 - **The ledger never forgets.** Each run also stores one `ledger` snapshot memory
   (running sums and counts per seat, model and domain). The track record is
   rebuilt from *latest snapshot + newer scores*, so it stays complete well past the
@@ -81,9 +82,20 @@ python -m rtr ask -n 5                       # 5 built-in public questions
 python -m rtr trust                          # track record recalled from Walrus
 python -m rtr proof                          # onchain proof via Tatum
 python -m rtr serve                          # http://127.0.0.1:8787
+python -m rtr snapshot --last-run preview/run6-strip-check.log --proof preview/proof6.log   # static docs/index.html
 python -m rtr --memory jsonl ask ...         # offline: local memory only
-pytest -q                                    # 18 tests, no network
+pytest -q                                    # 20 tests, no network
 ```
+
+## Evidence in this repo
+
+- `preview/run*.log`: real Mainnet runs, including the `MEMORY CHANGED THIS RUN` blocks and Tatum receipts.
+  `run5b-priming.log` is the run where a small model cited the very domains it was told to avoid, which is
+  why distrusted sources are now stripped before grading (`run6-strip-check.log`).
+- `preview/trust6.log`: the recalled track record and learning curve. `preview/proof6.log`: the Tatum
+  GraphQL proof (161 Blob objects) plus the gRPC cross-check. `preview/tatum_gateway_methods.txt`: what the
+  Tatum Sui gateway exposes.
+- `docs/index.html`: a static, read-only snapshot of the demo page.
 
 ## Reuse (dual use)
 

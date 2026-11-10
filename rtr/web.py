@@ -21,6 +21,18 @@ input{{width:75%;padding:8px;background:#181b23;color:#eee;border:1px solid #333
 <h2>Proof the memory exists (Tatum Sui gateway)</h2><pre>{proof}</pre>"""
 
 
+def render_static(records: list[dict], last_run: str, proof: str, network: str, note: str) -> str:
+    """A read-only snapshot of the demo page (no form, no keys) for static hosting."""
+    tracks = "\n".join([tracks_text("SEATS", trust.seat_tracks(records)),
+                        tracks_text("MODELS", trust.model_tracks(records)),
+                        tracks_text("SOURCES", trust.source_tracks(records)),
+                        history_text(trust.history(records))])
+    body = PAGE.format(net=network, status=html.escape(note), last=html.escape(last_run),
+                       tracks=html.escape(tracks), proof=html.escape(proof))
+    start, end = body.index("<form"), body.index("</form>") + len("</form>")
+    return body[:start] + "<p><b>Static snapshot</b> of a real Mainnet run. Run it yourself: see the README.</p>" + body[end:]
+
+
 def serve(table: RoundTable, port: int = 8787) -> None:
     state = {"last": "No run yet.", "busy": False}
     lock = threading.Lock()
@@ -34,7 +46,7 @@ def serve(table: RoundTable, port: int = 8787) -> None:
             try:
                 from .sui import TatumSui
                 proof = proof_text(TatumSui().proof(config.get("MEMWAL_ACCOUNT_ID") or ""))
-            except Exception as e:  # the page should render even if the RPC is down
+            except Exception as e:  # the page should render even if the RPC is down  # noqa: BLE001
                 proof = f"proof unavailable: {e}"
             body = PAGE.format(net=config.network(), status="running..." if state["busy"] else "",
                                last=html.escape(state["last"]), tracks=html.escape(tracks),
@@ -54,7 +66,7 @@ def serve(table: RoundTable, port: int = 8787) -> None:
                 try:
                     state["busy"] = True
                     state["last"] = run_text(table.run(q))
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     state["last"] = f"run failed: {e}"
                 finally:
                     state["busy"] = False

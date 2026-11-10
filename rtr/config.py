@@ -38,8 +38,7 @@ def _read_file_value(path: Path, var: str) -> str | None:
     # Accept either a bare value or KEY=VALUE lines.
     for line in raw.splitlines():
         line = line.strip()
-        if line.startswith("export "):
-            line = line[7:]
+        line = line.removeprefix("export ")
         if line.startswith(f"{var}="):
             return line.split("=", 1)[1].strip().strip('"').strip("'") or None
     if "=" in raw.splitlines()[0]:
@@ -55,7 +54,7 @@ def get(var: str) -> str | None:
     hint = _FILE_FALLBACKS.get(var)
     if not hint:
         return None
-    if hint.startswith("~") or hint.startswith("/"):
+    if hint.startswith(("~", "/")):
         path = Path(hint).expanduser()
     else:
         path = Path(os.environ.get("RTR_SECRETS_DIR", DEFAULT_SECRETS_DIR)) / hint

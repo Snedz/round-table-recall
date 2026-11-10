@@ -1,0 +1,153 @@
+<!doctype html><meta charset=utf-8><title>Round Table Recall</title>
+<style>body{background:#101218;color:#e6e6e6;font:14px ui-monospace,monospace;max-width:1100px;margin:24px auto}
+pre{background:#181b23;padding:14px;border-radius:8px;white-space:pre-wrap}h1,h2{color:#78c8ff}
+input{width:75%;padding:8px;background:#181b23;color:#eee;border:1px solid #333}button{padding:8px 14px}</style>
+<h1>Round Table Recall</h1><p>3 free-model seats answer, a critic scores, Walrus Memory (mainnet) remembers who to trust.</p>
+<p><b>Static snapshot</b> of a real Mainnet run. Run it yourself: see the README.</p>
+<p>Snapshot taken 2026-11-10 00:02 EST from Walrus Memory (mainnet).</p><h2>Last run</h2><pre>QUESTION [fca2c17c5d1b]: Do we lose most of our body heat through our heads?
+
+Seat weights from memory (before this run): atlas=1.75, vega=1.53, orion=1.65
+MEMORY CHANGED THIS RUN:
+  - told every seat to avoid 2 low-trust domains: universetoday.com, earthsky.org
+  - low-trust sources cited anyway, removed before grading: none
+
+  [atlas] answer A via nim:nvidia/nemotron-3-ultra-550b-a55b (60.0s)  critic score: 9.0/10
+     No, we do not lose most body heat through the head. Heat loss is proportional to exposed surface area; the head accounts for about 7–10 % of total body surface area and loses roughly that fraction of heat when uncovered. The myth originated from a 1950s U.S. Army survival manual that misinterpreted data from subjects wearing arctic clothing without hats, making the head the only exposed area. Later controlled studies
+     sources: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1769544/, https://www.bmj.com/content/337/bmj.a2769, https://www.nature.com/articles/s41598-017-17525-4
+  [vega] answer B via nim:nvidia/nemotron-3.5-lightning-30b-a3b (3.6s)  critic score: 8.0/10
+     No, heat loss is proportional to exposed surface area. The head represents about 7-10% of body surface area, so it accounts for roughly 7-10% of heat loss when uncovered. The myth likely stems from military survival studies where participants wore insulated suits but lost significant heat through their heads, creating a misleading association. In reality, any uncovered body part loses heat at a rate proportional to i
+     sources: https://www.mayoclinic.org/healthy-lifestyle/adult-health/in-depth/body-temperature/art-20045690, https://www.healthline.com/health/do-we-lose-most-body-heat-through-our-heads, https://www.clevelandclinic.org/health/articles/do-you-lose-body-heat-through-your-head
+  [orion] answer C via nim:minimaxai/minimax-m3.1-flash (13.9s)  critic score: 8.0/10
+     No. The common misconception is that the head is a major heat-loss “vent,” but heat escapes from exposed skin in proportion to its surface area. A head accounts for roughly 7–10% of adult skin surface, so it loses heat at about the same rate per square centimeter as other exposed areas—not disproportionately. In ordinary conditions, most heat loss occurs through the skin, with smaller contributions from breathing and
+     sources: https://www.nhs.uk/conditions/hypothermia/, https://www.britannica.com/science/human-body/Thermoregulation, https://www.merckmanuals.com/professional/endocrine-disorders/endocrine-metabolic-disorders/hypothermia
+
+CRITIC via nim:nvidia/nemotron-3-ultra-550b-a55b: Answer A provides the most precise historical origin of the myth (1950s U.S. Army manual) and cites primary research literature directly addressing the misconception.
+Source scores: ncbi.nlm.nih.gov=10, bmj.com=9, nature.com=9, mayoclinic.org=8, clevelandclinic.org=7, healthline.com=4, nhs.uk=9, britannica.com=9, merckmanuals.com=8
+WINNER (critic score x remembered weight): atlas
+Seat weights after this run: atlas=1.75, vega=1.53, orion=1.64
+
+MEMORY WRITES -&gt; walrus+jsonl: 14/14 done
+  done     blob=pGiD_Lrwu_Fc0NVoiE1pSI-n123Nr6ydp3Kzl-dJSJY job=21a415…f07516
+  done     blob=vT80oMs_3wbzzNo9hSN63fh-ve5uRgN2C0Ey78BVN2o job=a77848…4ac19a
+  done     blob=BB2dNmL0Qco7d9I8ZV5w14l9I-aKA5w5BFtwFsWsGiM job=1c38c8…a15d5f
+  done     blob=nI-VuZuSrn5GPOHdOAqWihGL6pglvjlXOWBg1rvMd9M job=5356e6…d586ae
+  done     blob=ASyCA0DeGXSAlIXAOANDje3ijLJs8nUP34BLV8KWT3Y job=612bbb…90af81
+  done     blob=GaO-g8BQKNlMT0NAVcqee6IKPivkv9b_FEzsopX7rfs job=477ca3…2f341c
+  done     blob=h63_tQQJvxuQILHWcxB0fZ3rSCkI3LpmCqDq1SB1okU job=563ad2…18a045
+  done     blob=ulGaorqO7WIYwZ2gR14DeMqd7oENBy8BD20R63pTirI job=4facd6…c3782c
+  done     blob=c4pC6_TieD0aPbLuMxhi5QCr7h8XOSemgDn0jy2gA5w job=66056b…8a8371
+  done     blob=ekWjIkYkN-aihkEtsYMhj4Q2hvDcLsdNDD6DJXvzIO0 job=643ad9…c50440
+  done     blob=cXPUfVxyjZEsSKjUipjm-46Nnh9i446XJoaEbEBTZCk job=75881b…ee7a2c
+  done     blob=IQzwGzq0dQ4Vy3NpeCcVeUM-SCMA0bHmVrbVK2jtKCk job=a819be…f4d998
+  done     blob=MmYW109zINjGgRsLSWtRwteQEpL1YrpxKDOzYeVwS2w job=cbeb70…2777c2
+  done     blob=_NSX5uTU3IaaU91PgiEsCPbnBzFvbnH-SqsoA3ivmkI job=98af3e…427d16
+TATUM RECEIPT (Sui Mainnet via Tatum): Walrus Blob objects 147 -&gt; 161 (+14); 14 memory writes this run; matches</pre><h2>Track record (recalled from memory)</h2><pre>SEATS
+  atlas                                            n=15  mean= 9.3 weight=1.75
+  orion                                            n=12  mean= 8.8 weight=1.64
+  vega                                             n=16  mean= 8.0 weight=1.53
+MODELS
+  nim:nvidia/nemotron-3-ultra-550b-a55b            n=5   mean= 9.6 weight=1.66
+  nim:stepfun-ai/step-5-preview                    n=6   mean= 9.2 weight=1.62
+  openrouter:dots-studio/dots-3-note-preview:free  n=6   mean= 9.2 weight=1.62
+  nim:minimaxai/minimax-m3.1-flash                 n=6   mean= 9.0 weight=1.60
+  openrouter:nvidia/nemotron-3.5-lightning:free    n=6   mean= 9.0 weight=1.60
+  openrouter:recursive/flint-v1.0:free             n=6   mean= 8.5 weight=1.52
+  nim:nvidia/nemotron-3.5-lightning-30b-a3b        n=8   mean= 6.9 weight=1.30
+SOURCES
+  britannica.com                                   n=9   mean= 9.0 weight=1.66
+  ncbi.nlm.nih.gov                                 n=3   mean=10.0 weight=1.60
+  earthobservatory.nasa.gov                        n=3   mean= 9.3 weight=1.52
+  nasa.gov                                         n=3   mean= 9.0 weight=1.48
+  nca.gov.au                                       n=2   mean= 9.5 weight=1.45
+  science.nasa.gov                                 n=2   mean= 9.5 weight=1.45
+  australia.gov.au                                 n=2   mean= 9.0 weight=1.40
+  esa.int                                          n=2   mean= 9.0 weight=1.40
+  pnas.org                                         n=2   mean= 9.0 weight=1.40
+  mayoclinic.org                                   n=3   mean= 8.0 weight=1.36
+  atmos.washington.edu                             n=1   mean=10.0 weight=1.33
+  hyperphysics.phy-astr.gsu.edu                    n=1   mean=10.0 weight=1.33
+  metoffice.gov.uk                                 n=1   mean=10.0 weight=1.33
+  ninds.nih.gov                                    n=1   mean=10.0 weight=1.33
+  nssl.noaa.gov                                    n=1   mean=10.0 weight=1.33
+  pubmed.ncbi.nlm.nih.gov                          n=1   mean=10.0 weight=1.33
+  scied.ucar.edu                                   n=1   mean=10.0 weight=1.33
+  scijinks.gov                                     n=1   mean=10.0 weight=1.33
+  spaceplace.nasa.gov                              n=1   mean=10.0 weight=1.33
+  aph.gov.au                                       n=1   mean= 9.0 weight=1.27
+  bmj.com                                          n=1   mean= 9.0 weight=1.27
+  earth.nasa.gov                                   n=1   mean= 9.0 weight=1.27
+  nature.com                                       n=1   mean= 9.0 weight=1.27
+  nhs.uk                                           n=1   mean= 9.0 weight=1.27
+  niams.nih.gov                                    n=1   mean= 9.0 weight=1.27
+  nssdc.gsfc.nasa.gov                              n=1   mean= 9.0 weight=1.27
+  sciencedirect.com                                n=1   mean= 9.0 weight=1.27
+  solarsystem.nasa.gov                             n=1   mean= 9.0 weight=1.27
+  usgs.gov                                         n=1   mean= 9.0 weight=1.27
+  weather.gov                                      n=1   mean= 9.0 weight=1.27
+  health.harvard.edu                               n=2   mean= 7.5 weight=1.25
+  scientificamerican.com                           n=2   mean= 7.5 weight=1.25
+  canberra.gov.au                                  n=1   mean= 8.0 weight=1.20
+  climate.gov                                      n=1   mean= 8.0 weight=1.20
+  en.wikipedia.org                                 n=5   mean= 6.4 weight=1.20
+  legislation.gov.au                               n=1   mean= 8.0 weight=1.20
+  merckmanuals.com                                 n=1   mean= 8.0 weight=1.20
+  nationalcapital.gov.au                           n=1   mean= 8.0 weight=1.20
+  nationalgeographic.com                           n=2   mean= 7.0 weight=1.20
+  noaa.gov                                         n=1   mean= 8.0 weight=1.20
+  physicsworld.com                                 n=1   mean= 8.0 weight=1.20
+  space.com                                        n=2   mean= 7.0 weight=1.20
+  www2.le.ac.uk                                    n=1   mean= 8.0 weight=1.20
+  arthritis.org                                    n=1   mean= 7.0 weight=1.13
+  bbc.com                                          n=1   mean= 7.0 weight=1.13
+  clevelandclinic.org                              n=1   mean= 7.0 weight=1.13
+  corning.com                                      n=1   mean= 7.0 weight=1.13
+  history.com                                      n=1   mean= 7.0 weight=1.13
+  nps.gov                                          n=1   mean= 7.0 weight=1.13
+  parliament.gov.au                                n=1   mean= 7.0 weight=1.13
+  smithsonianmag.com                               n=1   mean= 7.0 weight=1.13
+  ucar.edu                                         n=1   mean= 7.0 weight=1.13
+  abc.net.au                                       n=1   mean= 6.0 weight=1.07
+  healthline.com                                   n=1   mean= 4.0 weight=0.93
+  earthsky.org                                     n=3   mean= 4.0 weight=0.88
+  universetoday.com                                n=2   mean= 2.5 weight=0.75
+LEARNING CURVE (seat weights going into each run, recalled from memory)
+  time (local)      atlas   orion   vega    winner
+  11-09 18:28 EST   1.00    1.00    1.00    vega
+  11-09 18:32 EST   1.00    1.00    0.67    None
+  11-09 18:36 EST   1.00    1.00    0.67    orion
+  11-09 19:04 EST   1.27    1.33    0.90    atlas
+  11-09 19:06 EST   1.45    1.35    1.04    atlas
+  11-09 19:08 EST   1.52    1.44    1.20    atlas
+  11-09 19:11 EST   1.57    1.47    1.31    atlas
+  11-09 19:12 EST   1.63    1.49    1.38    orion
+  11-09 22:24 EST   1.60    1.52    1.38    atlas
+  11-09 23:23 EST   1.64    1.58    1.44    orion
+  11-09 23:28 EST   1.64    1.60    1.46    atlas
+  11-09 23:33 EST   1.68    1.60    1.48    atlas
+  11-09 23:37 EST   1.69    1.60    1.48    atlas
+  11-09 23:40 EST   1.72    1.60    1.51    atlas
+  11-09 23:44 EST   1.72    1.62    1.54    atlas
+  11-09 23:46 EST   1.74    1.62    1.53    atlas
+  11-09 23:54 EST   1.75    1.63    1.55    atlas
+  11-09 23:58 EST   1.75    1.65    1.53    atlas</pre>
+<h2>Proof the memory exists (Tatum Sui gateway)</h2><pre>PROOF THE MEMORY EXISTS (mainnet) via Tatum Sui gateway (https://sui-mainnet.gateway.tatum.io/graphql)
+  latest checkpoint : 343603063
+  MemWalAccount     : 0xab914fd1…bdce5e
+  type              : 0xe7c16fbea0560e7057e2bf7422feaa4fb313749fc69c9e9092fac7a33b81d7f5::account::MemWalAccount
+  version / digest  : 1074813417 / 6SyEsc9DvP538QNDcMDLbdDs5JPZ2QhLRBeWVZ18YvMC
+  owner             : 0xc340cc68…1a0f83   active=True
+  delegate keys     : 1
+  Walrus Blob objects owned by owner: 161
+    0x00b37fec…c8346c blob=DeXBbifJj_xekL87xJk0ORAQ5kfv_1dMYj5PkI4-tpY size=514
+    0x04b03490…901ae5 blob=ms6h0qRLo_cN37w-kmg6Give3Y4E3mJP6GqsYyJMPw8 size=414
+    0x06b32188…16a4a4 blob=Ehj-iCMRx3JYfWnKw6kooPRPVWEpUZ13bxMwKMapDUk size=520
+    0x07827fc4…288ba2 blob=AX4XT96iI0JEMLVI9a2p_NOZ62vq2wY_D-1mBLfhLrA size=532
+    0x08cdfcdb…7036d0 blob=h_EYI8-S1_BMJEMMrqHVPTPlW3zULfGGKUMOxihM9Ww size=546
+    0x09d42c98…c0c5d8 blob=66-TCTXhVwK1hj1Ir0cy3D7eHYxxhtxK5OCR4C4d_wo size=407
+    0x0c7985e2…9dcec9 blob=FE9il8MO7lL9nrPdMy382-EMLl0AwpFhl_OzsipXryQ size=522
+    0x0d0d7890…b62faa blob=GaO-g8BQKNlMT0NAVcqee6IKPivkv9b_FEzsopX7rfs size=402
+    0x0d8505cc…10e055 blob=soCFKQBqwjLWem6nDf7gahZDy2fn-wHJOs1HVK0j8lI size=408
+    0x0f3c62ab…92d8c0 blob=Q7P0Qdcu3gO-WLi72wiAt84NzvCD1Cvbx4Z8JkkjDCA size=506
+    0x0fa3fe82…2484b3 blob=UL5XhdGnyD70qIueq7IEhe_vn4xyNKUXey8XwCR6fUA size=405
+    0x0fb80540…51338f blob=LTSgLNYwAN7rgIiNqxrbwmo2TwNA9uZvTmRKjXi16Eg size=400
+CROSS-CHECK via Tatum Sui gRPC (sui-mainnet-grpc.gateway.tatum.io:443, chain=mainnet, checkpoint 343603079): gRPC version/digest 1074813417 / 6SyEsc9DvP538QNDcMDLbdDs5JPZ2QhLRBeWVZ18YvMC match GraphQL</pre>

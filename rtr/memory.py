@@ -13,12 +13,17 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Protocol
+from typing import Protocol
 
 PREFIX = "RTR1 "
-LEDGER_QUERY = "RTR1 kind ledger snapshot tallies running sums counts"
+# Shaped like a real ledger memory: semantic recall finds snapshots far more
+# reliably with a look-alike than with a description of one.
+LEDGER_QUERY = ('RTR1 {"curve":[[1794286000.0,"atlas",{"atlas":1.7,"orion":1.6,"vega":1.5}]],"kind":"ledger",'
+                '"runs":17,"tallies":{"domain":{"britannica.com":[64.0,7]},"route":{},"seat":{"atlas":[121.0,13]}},'
+                '"ts":1794286000.0}')
 RUN_QUERY = "round table run summary: question, winner, weights before"
 
 
@@ -100,7 +105,7 @@ class WalrusMemory:
         self.timeout_ms = timeout_ms
 
     @classmethod
-    def from_config(cls, namespace: str = "round-table-recall") -> "WalrusMemory":
+    def from_config(cls, namespace: str = "round-table-recall") -> WalrusMemory:
         from memwal import MemWalSync
 
         from . import config
@@ -144,7 +149,7 @@ class WalrusMemory:
         # top-``limit`` is full of raw scores.
         # (query, limit, sort): "recent" returns the newest memories, so the newest
         # run's ledger snapshot is always included (each run writes < 25 memories).
-        for q, n, sort in ((query, limit, None), (LEDGER_QUERY, 25, "recent"), (LEDGER_QUERY, 5, None),
+        for q, n, sort in ((query, limit, None), (LEDGER_QUERY, 10, "recent"), (LEDGER_QUERY, 10, None),
                            (RUN_QUERY, 50, None)):
             kw = {"sort": sort} if sort else {}
             res = self.client.recall(RecallParams(query=q, limit=n, namespace=self.namespace, **kw))
@@ -170,7 +175,7 @@ class WalrusMemory:
                                              include_seal_session=False))
         try:
             return asyncio.run(go())
-        except Exception as e:  # stats are informational only
+        except Exception as e:  # stats are informational only  # noqa: BLE001
             return {"error": str(e)[:200]}
 
 
@@ -202,7 +207,7 @@ class MirroredMemory:
             recs = self.primary.recall(limit=limit)
             if recs:
                 return recs
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             self.last_error = str(e)[:200]
         return self.mirror.recall(limit=limit)
 

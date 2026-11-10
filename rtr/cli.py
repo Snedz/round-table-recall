@@ -41,7 +41,7 @@ def _blob_count() -> int | None:
 
         p = TatumSui().proof(config.get("MEMWAL_ACCOUNT_ID") or "")
         return None if p.errors else p.blob_count
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 
@@ -97,7 +97,7 @@ def cmd_proof(args) -> int:
             try:
                 g = TatumSuiGrpc()
                 info = g.service_info()
-                ok, msg = cross_check(p.account_version, p.account_digest, g.get_object(account))
+                _, msg = cross_check(p.account_version, p.account_digest, g.get_object(account))
                 break
             except Exception as e:
                 if "429" not in str(e) or attempt == 3:
@@ -106,8 +106,23 @@ def cmd_proof(args) -> int:
               f"checkpoint {info.get('checkpointHeight')}): {msg}")
     except ImportError:
         print("CROSS-CHECK via Tatum Sui gRPC skipped (pip install grpcio grpcio-reflection protobuf)")
-    except Exception as e:  # informational; the GraphQL proof above stands on its own
+    except Exception as e:  # informational; the GraphQL proof above stands on its own  # noqa: BLE001
         print(f"CROSS-CHECK via Tatum Sui gRPC failed: {type(e).__name__}: {str(e)[:160]}")
+    return 0
+
+
+def cmd_snapshot(args) -> int:
+    from .web import render_static
+
+    recs = build_memory(args.memory).recall(limit=100)
+    last = Path(args.last_run).read_text().split("=== ")[-1] if args.last_run else "No run."
+    last = "\n".join(l for l in last.splitlines()[1:] if not l.startswith("ask_exit"))
+    proof = Path(args.proof).read_text().replace("DONE", "").strip() if args.proof else ""
+    note = f"Snapshot taken {time.strftime('%Y-%m-%d %H:%M %Z')} from Walrus Memory ({config.network()})."
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(render_static(recs, last, proof, config.network(), note))
+    print(f"wrote {out}")
     return 0
 
 
@@ -129,6 +144,11 @@ def main(argv: list[str] | None = None) -> int:
     a.set_defaults(fn=cmd_ask)
     sub.add_parser("trust", help="show remembered track records").set_defaults(fn=cmd_trust)
     sub.add_parser("proof", help="read the MemWal account and blobs via Tatum").set_defaults(fn=cmd_proof)
+    sn = sub.add_parser("snapshot", help="write a static read-only demo page")
+    sn.add_argument("-o", "--out", default="docs/index.html")
+    sn.add_argument("--last-run", help="ask log whose last run is shown")
+    sn.add_argument("--proof", help="saved `rtr proof` output to embed")
+    sn.set_defaults(fn=cmd_snapshot)
     s = sub.add_parser("serve", help="minimal demo web page")
     s.add_argument("--port", type=int, default=8787)
     s.set_defaults(fn=cmd_serve)

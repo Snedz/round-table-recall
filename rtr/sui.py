@@ -13,9 +13,8 @@ Tatum serves Sui over GraphQL (``https://sui-<network>.gateway.tatum.io/graphql`
 from __future__ import annotations
 
 import base64
-from dataclasses import dataclass, field
-
 import time
+from dataclasses import dataclass, field
 
 import requests
 

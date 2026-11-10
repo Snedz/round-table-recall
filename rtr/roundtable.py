@@ -96,7 +96,7 @@ def question_id(q: str) -> str:
 
 def domain(url: str) -> str:
     host = urlparse(url if "://" in url else f"https://{url}").netloc.lower()
-    return host[4:] if host.startswith("www.") else host
+    return host.removeprefix("www.")
 
 
 def _ask_seat(seat: Seat, question: str, chat: ChatFn, memory_note: str = "") -> SeatResult:
@@ -172,8 +172,14 @@ class RoundTable:
             results = list(pool.map(lambda s: _ask_seat(s, question, self.chat, note), seats))
         avoided = {t.key for t in trust.distrusted_sources(records)}
         if avoided:
-            cited_bad = sorted({domain(u) for r in results for u in r.sources} & avoided)
-            effects.append("low-trust domains still cited: " + (", ".join(cited_bad) if cited_bad else "none"))
+            stripped = []
+            for r in results:
+                bad = [u for u in r.sources if domain(u) in avoided]
+                if bad:
+                    r.sources = [u for u in r.sources if domain(u) not in avoided]
+                    stripped.append(f"{r.seat}: {', '.join(sorted({domain(u) for u in bad}))}")
+            effects.append("low-trust sources cited anyway, removed before grading: "
+                           + ("; ".join(stripped) if stripped else "none"))
 
         answered = [r for r in results if r.answer]
         order = answered[:]

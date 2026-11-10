@@ -1,0 +1,39 @@
+
+=== 2026-11-09 23:53:23 EST | network=mainnet | memory=walrus+jsonl ===
+QUESTION [3a62a5b795f8]: Do bulls get angry at the color red?
+
+Seat weights from memory (before this run): atlas=1.75, vega=1.55, orion=1.63
+MEMORY CHANGED THIS RUN:
+  - told every seat to avoid 2 low-trust domains: universetoday.com, earthsky.org
+  - low-trust domains still cited: earthsky.org, universetoday.com
+
+  [atlas] answer A via nim:stepfun-ai/step-5-preview (15.7s)  critic score: 9.0/10
+     No. Bulls are dichromatic mammals and cannot distinguish red from green, so the color itself does not enrage them. In bullfighting, the matador’s final muleta is red largely to mask blood; the charge is triggered by the cape’s flickering movement and the bull’s prior irritation from picadors and banderilleros. Veterinary physiology and behavioral tests confirm that motion, not color, provokes the animal.
+     sources: https://www.scientificamerican.com/article/fact-or-fiction-bulls-are-provoked-by-the-color-red/, https://www.britannica.com/story/do-bulls-get-angry-when-they-see-red
+  [vega] answer C via nim:nvidia/nemotron-3.5-lightning-30b-a3b (2.1s)  critic score: 6.0/10
+     No, bulls are colorblind to red. They react to the matador's cape movement, not its color. The red cape is traditional; bulls charge the motion regardless of hue.
+     sources: https://www.universetoday.com/12345/do-bulls-get-angry-at-the-color-red/, https://www.earthsky.org/astronomy/do-bulls-react-to-the-color-red/, https://www.pnas.org/doi/10.1073/pnas.0608876104
+  [orion] answer B via nim:minimaxai/minimax-m3.1-flash (27.3s)  critic score: 9.0/10
+     No. Bulls are color-blind to red and green; they cannot distinguish red from other similar colors. What provokes them is movement—such as a cape waving or a person gesturing—plus the threat or provocation itself. The red cape is a convention of bullfighting, not the trigger. Bulls also become agitated by noise, crowds, and unfamiliar surroundings. So the common misconception is that red enrages bulls; in reality, mot
+     sources: https://www.britannica.com/science/bullfight, https://www.nationalgeographic.com/science/article/bulls-color-blind-red, https://www.merckvetmanual.com/behavior-of-animals/cattle
+
+CRITIC via nim:nvidia/nemotron-3-ultra-550b-a55b: Answer B provides the most comprehensive and nuanced explanation, correctly identifying dichromatic vision, the role of movement and threat, and additional stressors like noise and crowds, supported by a strong mix of primary veterinary and authoritative secondary sources.
+Source scores: scientificamerican.com=9, britannica.com=8, nationalgeographic.com=7, merckvetmanual.com=8, universetoday.com=3, earthsky.org=4, pnas.org=9
+WINNER (critic score x remembered weight): atlas
+Seat weights after this run: atlas=1.75, vega=1.53, orion=1.65
+
+MEMORY WRITES -> walrus+jsonl: 12/12 done
+  done     blob=bZC64YJ7b5jf3ZF9P6pkNs0KWyUahXA86fvSaWsrR6g job=804df7…4187f3
+  done     blob=CLmxRvN216wGSftP4LD2_mPyklywwp3NHTlIbK9WO7k job=133dfd…06a313
+  done     blob=9I0T7uFwN9LwxJ1fniFZYt15LFpqlxV-0DaJqLOU8Cg job=5fba0a…cd7e77
+  done     blob=M-89eXV0JlULJAJo5c7wGWSQ044JEfGcurADQufqxf8 job=800c5f…5841eb
+  done     blob=66-TCTXhVwK1hj1Ir0cy3D7eHYxxhtxK5OCR4C4d_wo job=857898…be9862
+  done     blob=RI4ngREpf3ifAK11sp6_lzOYmSXn1GRBrhP3uzDQh7w job=dcaa55…ea89c3
+  done     blob=PvFOo3jUxYqQc61xVj7UebpzI-KUMvk5UBFfv4CX67U job=e548a0…8eaefa
+  done     blob=XrVs4-6VXmq6_iWQTStd3aQXu6J4ex4DZgwnkKSZoNE job=92100a…7491b5
+  done     blob=UL5XhdGnyD70qIueq7IEhe_vn4xyNKUXey8XwCR6fUA job=45d793…b7e534
+  done     blob=UIXewct7fU2pL52diewMz_t4abAcPmiSc_enslzkEvc job=706a50…3a827e
+  done     blob=ec7eW3Z-joSLvGFGt4kxBkEi37R0-gGtrlRzKw8nz4Y job=8429c7…886341
+  done     blob=xoWrukNLGIDbgKXyBKqyldG2GHTjhectl3QJrFy5VMU job=54f884…0d24da
+TATUM RECEIPT (Sui Mainnet via Tatum): Walrus Blob objects 135 -> 147 (+12); 12 memory writes this run; matches
+ask_exit=0

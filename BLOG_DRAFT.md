@@ -1,10 +1,14 @@
-<!-- DRAFT ONLY. Not published. Needs Snowden's yes on the exact text and where it goes. -->
+<!-- Draft of the blog post. Every number comes from the real run logs in preview/. -->
 # Round Table Recall: a research agent that remembers who to trust
 
-**TL;DR:** I built a research round table of three free AI models plus a critic.
-Every score the critic gives is stored in Walrus Memory on Sui Mainnet, and the
-next question is weighted by that remembered track record. A proof panel reads
-the memory's onchain objects through Tatum's Sui gateway.
+**TL;DR:** I built a research round table: three free AI models answer, a blind
+critic grades them, and every grade is stored in **Walrus Memory on Sui Mainnet**.
+The next run recalls that track record, and it changes what the table *does*:
+the winner is weighted by remembered trust, weak models get demoted or put on
+probation, and low-trust sources are named for every seat to avoid. A proof panel
+reads the memory's onchain objects through **Tatum's Sui gateway** (GraphQL plus a
+gRPC cross-check), and every run ends with a Tatum receipt showing the blob count
+went up by exactly the number of memories written.
 
 ## The problem
 Multi-model "councils" are great at disagreeing and bad at remembering. Every
@@ -13,64 +17,98 @@ today. Which model, and which source, has earned trust is exactly the context
 that gets lost between sessions.
 
 ## What it does
-1. Three seats (each a chain of free models across NVIDIA NIM, OpenRouter and
-   opencode Zen) answer a public research question and cite up to 3 URLs.
+1. Three seats (each a failover chain of free models across NVIDIA NIM,
+   OpenRouter and opencode Zen) answer a public research question and cite up to
+   3 URLs.
 2. A critic seat grades the answers anonymized and shuffled, 0-10, and grades
    each cited source domain.
 3. Each grade becomes its own memory (`seat_score`, `source_score`, `run`) via
-   the Walrus Memory Python SDK and the managed Mainnet relayer.
+   the Walrus Memory Python SDK and the managed Mainnet relayer, plus one
+   `ledger` snapshot per run.
 4. The next run recalls those memories, computes a Bayesian track record per
-   seat, and picks the answer with the best `critic score x remembered weight`.
+   seat, model and source, and lets that record steer the run.
+
+## How memory changes the product
+Before anyone answers, the table prints a `MEMORY CHANGED THIS RUN` block:
+
+- **Sources it learned to distrust are named in every prompt, and removed if
+  cited anyway.** The critic had scored universetoday.com and earthsky.org below
+  an unknown source, so later prompts told every seat not to cite them. Most runs
+  came back clean. But on two questions (goldfish memory, bulls and red), the
+  smallest model cited exactly those two domains, and one URL looked made up
+  (`universetoday.com/12345/...`). Naming the domains had primed it. So the table
+  now strips any distrusted source from an answer before the critic grades it,
+  and the run log says which seat did it.
+- **Models with a below-average record move to the back** of their seat's
+  failover chain.
+- **A seat whose weight drops below 0.80 goes on probation**, and its usual
+  model is swapped out for that run.
+- **The final pick is `critic score x remembered weight`**, so a seat that has
+  been right for weeks beats a lucky newcomer on a tie.
+
+Recall only returns about 100 memories at a time, and I passed 100 tonight. A
+naive ledger would have started quietly forgetting its oldest runs. So each run
+also stores one `ledger` memory with running sums and counts, plus the
+learning curve. The track record is rebuilt from *newest snapshot + newer
+scores*. I checked it against a local mirror of every write: same counts
+(atlas 15, vega 16, orion 12 scored answers after 17 runs).
 
 ## How it uses Walrus
 - `remember_bulk_and_wait` writes up to 20 memories per call. Each one is
   Seal-encrypted and stored as its own Walrus blob, owned by my Sui address.
 - `recall` brings the track record back on any machine that holds the delegate
-  key. There's no app database to lose, and `restore` can rebuild the index
-  from the blobs.
+  key. Three queries are merged: the main semantic query, a `sort="recent"`
+  query that always includes the newest ledger snapshot, and a run-summary
+  query for the learning curve. There's no app database to lose.
+- Cost: $0. The managed relayer covers WAL storage and SUI gas.
 
 ## How it uses Tatum
-The proof panel uses Tatum's Sui gateway (GraphQL) to read the latest
-checkpoint, the `MemWalAccount` object (owner, delegate keys, active flag) and
-every `::blob::Blob` object the owner holds. That shows the memory exists
-independently of the relayer that wrote it.
+- **GraphQL** on `sui-mainnet.gateway.tatum.io/graphql`, the Sui interface the
+  gateway's `/_methods` lists, reads the latest checkpoint, the `MemWalAccount`
+  object (owner, delegate keys, active flag) and every `::blob::Blob` object the
+  owner holds. It backs off on HTTP 429 so the free tier's 3 requests a second
+  don't undercount.
+- **gRPC** on `sui-mainnet-grpc.gateway.tatum.io` (`sui.rpc.v2.LedgerService`,
+  message types from server reflection) re-reads the account object. Its
+  version and digest must match the GraphQL read.
+- **Per-run receipt.** After every Mainnet run the CLI re-counts the Blob
+  objects through Tatum, for example "Walrus Blob objects 127 -> 135 (+8); 8
+  memory writes this run; matches".
+
+Anyone can verify it without trusting the app. The account id is public, so
+run `python -m rtr proof` with your own free Tatum key.
 
 ## How it learned over time
-Numbers from `python -m rtr trust` on Mon Nov 9, 7:13 PM ET (America/Toronto),
-after 1 evening NIM run plus 5 OpenRouter runs. 66 memories on Walrus Mainnet.
+All times are Mon Nov 9 2026, ET. The learning curve below is recalled from
+Walrus. Each row shows the seat weights going into a run.
 
-| Seat  | n | mean score | weight |
-|-------|---|------------|--------|
-| atlas | 6 | 9.0 | 1.60 |
-| orion | 6 | 8.5 | 1.52 |
-| vega  | 7 | 7.4 | 1.38 |
+| run (ET) | atlas | orion | vega | winner |
+|---|---|---|---|---|
+| 6:28 PM | 1.00 | 1.00 | 1.00 | vega (only seat that answered; scored 0) |
+| 6:32 PM | 1.00 | 1.00 | 0.67 | (no scored answers) |
+| 7:04 PM | 1.27 | 1.33 | 0.90 | atlas |
+| 7:12 PM | 1.63 | 1.49 | 1.38 | orion |
+| 11:23 PM | 1.64 | 1.58 | 1.44 | orion |
+| 11:46 PM | 1.74 | 1.62 | 1.53 | atlas |
+| 11:58 PM | 1.75 | 1.65 | 1.53 | atlas |
 
-| Model route that answered | n | mean | weight |
-|---------------------------|---|------|--------|
-| openrouter:dots-studio/dots-3-note-preview:free | 5 | 9.0 | 1.57 |
-| openrouter:nvidia/nemotron-3.5-lightning:free | 5 | 8.8 | 1.54 |
-| openrouter:recursive/flint-v1.0:free | 5 | 8.2 | 1.46 |
-| nim:minimaxai/minimax-m3.1-flash | 1 | 10.0 | 1.33 |
-| nim:stepfun-ai/step-5-preview | 1 | 9.0 | 1.27 |
-| nim:nvidia/nemotron-3.5-lightning-30b-a3b | 2 | 4.0 | 0.90 |
-
-| Source domain (top / bottom) | n | mean | weight |
-|------------------------------|---|------|--------|
-| britannica.com | 5 | 9.0 | 1.57 |
-| earthobservatory.nasa.gov | 2 | 9.5 | 1.45 |
-| science.nasa.gov | 2 | 9.5 | 1.45 |
-| en.wikipedia.org | 4 | 6.2 | 1.17 |
-| earthsky.org | 1 | 3.0 | 0.87 |
-| universetoday.com | 1 | 2.0 | 0.80 |
-
-- Run 0: every seat starts at weight 1.00.
-- After the first scored Mainnet run (Mon Nov 9, 6:33 PM ET, all NIM): orion 1.33, atlas 1.27, vega 0.90. Vega had earlier echoed the prompt template and scored 0; memory kept that.
-- After five more runs at 7:02–7:13 PM ET (every seat answered via OpenRouter free): atlas 1.60, orion 1.52, vega 1.38. Source scores now spread (e.g. NASA 8–10, wikipedia ~6, blogs 2–3) instead of all-10.
-- Tatum Sui proof at the same time: MemWalAccount active, **50** Walrus Blob objects owned on Mainnet (undercount: the free Tatum tier returned HTTP 429 mid-paging). After adding 429 backoff (Mon Nov 9, 10:23 PM ET): **66** Blob objects, one per memory.
+- Run 0: every seat starts at 1.00.
+- Vega's first answer (6:28 PM) echoed the prompt template and scored 0. Memory kept
+  that: vega went into the next runs at 0.67 and had to earn its weight back.
+- Source trust spread out: britannica.com 1.66 (n=9), NIH/NCBI 1.60, NASA Earth
+  Observatory 1.52, while healthline.com fell to 0.93, earthsky.org to 0.88 and
+  universetoday.com to 0.75.
+- The model table records which free model actually answered. When the
+  OpenRouter and Zen free quotas ran out at night, the seats failed over to NVIDIA
+  NIM models, and those models built their own records.
+- Tatum proof at the end: MemWalAccount active, **161 Walrus Blob objects
+  owned on Mainnet**, one per memory, and the gRPC read of the account agrees
+  with the GraphQL read (same version and digest).
 
 ## What's next
 The memory layer is a tiny interface (`remember(records)`, `recall()`), so any
-multi-model loop can reuse it, for example to remember which reviewer model
-catches real bugs in a plan, critique, build, review loop.
+multi-model loop can reuse it. `rtr.adapters.council_records` already turns an
+llm-council style peer ranking into ledger records, so a planning council can
+remember which reviewer models catch real problems.
 
-Repo: _link once public_ · Demo: _video link_ · Built for Walrus x Tatum "Total Recall".
+Repo: https://github.com/Snedz/round-table-recall · Demo video: _link once uploaded_ · Live snapshot: _GitHub Pages link if enabled_ · Built for Walrus x Tatum "Total Recall".

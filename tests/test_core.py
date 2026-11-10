@@ -1,3 +1,4 @@
+import json
 import random
 
 import pytest
@@ -58,10 +59,9 @@ def _fake_chat(route, messages, max_tokens, timeout):
         # Grade by content: the answer containing "Canberra" is right.
         blocks = prompt.split("Answer ")[1:]
         scores = {b[0]: (9 if "Canberra is" in b else 2) for b in blocks}
-        return '{"scores": %s, "sources": {"wikipedia.org": 8}, "best": "A", "why": "x"}' % \
-            str(scores).replace("'", '"')
+        return json.dumps({"scores": scores, "sources": {"wikipedia.org": 8}, "best": "A", "why": "x"})
     answer = "Canberra is the capital." if route.model == "good" else "Sydney is the capital."
-    return '{"answer": "%s", "sources": ["https://en.wikipedia.org/wiki/Canberra"]}' % answer
+    return json.dumps({"answer": answer, "sources": ["https://en.wikipedia.org/wiki/Canberra"]})
 
 
 def test_round_table_learns_across_runs(tmp_path):
@@ -171,6 +171,7 @@ def test_memory_changes_routes_and_prompt(tmp_path):
     answer_prompt = next(p for m, p in seen_prompts if m == "good")
     assert "seo-farm.xyz" in answer_prompt
     assert any("demoted model nim:bad" in e for e in r.effects)
+    assert any("removed before grading: none" in e for e in r.effects)
     snaps = [x for x in mem.recall() if x["kind"] == "ledger"]
     assert snaps and snaps[-1]["tallies"]["seat"]["s"][1] == 3
 
@@ -214,3 +215,18 @@ def test_snapshot_carries_learning_curve():
     later = {"kind": "run", "ts": 4.0, "winner": "a", "weights_before": {"a": 1.4}}
     # old run memories no longer recalled: the curve still comes back from the snapshot
     assert [round(w["a"], 2) for _, _, w in trust.history([snap, later])] == [1.0, 1.1, 1.2, 1.4]
+
+
+def test_low_trust_sources_are_removed_before_grading(tmp_path):
+    def chat(route, messages, max_tokens, timeout):
+        if route.model == "critic":
+            return _fake_chat(route, messages, max_tokens, timeout)
+        return '{"answer": "Canberra is the capital.", "sources": ["https://seo-farm.xyz/a", "https://www.britannica.com/x"]}'
+
+    mem = JsonlMemory(tmp_path / "m.jsonl")
+    mem.remember([{"kind": "source_score", "domain": "seo-farm.xyz", "score": 1, "ts": 1.0}])
+    table = RoundTable([Seat("s", [Route("nim", "good")])], Seat("critic", [Route("nim", "critic")]), mem,
+                       chat=chat, rng=random.Random(0))
+    r = table.run("What is the capital of Australia?")
+    assert r.seats[0].sources == ["https://www.britannica.com/x"]
+    assert any("s: seo-farm.xyz" in e for e in r.effects)
