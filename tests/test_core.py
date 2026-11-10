@@ -206,3 +206,11 @@ def test_low_weight_seat_goes_on_probation(tmp_path):
     r = table.run("What is the capital of Australia?")
     assert r.seats[0].route == "nim:good"
     assert any("on probation" in e for e in r.effects)
+
+
+def test_snapshot_carries_learning_curve():
+    runs = [{"kind": "run", "ts": float(i), "winner": "a", "weights_before": {"a": 1 + i / 10}} for i in range(3)]
+    snap = trust.snapshot(runs, ts=3.0)
+    later = {"kind": "run", "ts": 4.0, "winner": "a", "weights_before": {"a": 1.4}}
+    # old run memories no longer recalled: the curve still comes back from the snapshot
+    assert [round(w["a"], 2) for _, _, w in trust.history([snap, later])] == [1.0, 1.1, 1.2, 1.4]

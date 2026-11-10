@@ -19,6 +19,7 @@ from typing import Iterable, Protocol
 
 PREFIX = "RTR1 "
 LEDGER_QUERY = "RTR1 kind ledger snapshot tallies running sums counts"
+RUN_QUERY = "round table run summary: question, winner, weights before"
 
 
 def encode(record: dict) -> str:
@@ -138,10 +139,15 @@ class WalrusMemory:
 
         out: list[dict] = []
         seen: set[str] = set()
-        # Second, small query so the latest ledger snapshot is always in the set
-        # even when the main query's top-``limit`` is full of raw scores.
-        for q, n in ((query, limit), (LEDGER_QUERY, 5)):
-            res = self.client.recall(RecallParams(query=q, limit=n, namespace=self.namespace))
+        # Extra small queries so the latest ledger snapshot and the run summaries
+        # (the learning curve) are always in the set, even when the main query's
+        # top-``limit`` is full of raw scores.
+        # (query, limit, sort): "recent" returns the newest memories, so the newest
+        # run's ledger snapshot is always included (each run writes < 25 memories).
+        for q, n, sort in ((query, limit, None), (LEDGER_QUERY, 25, "recent"), (LEDGER_QUERY, 5, None),
+                           (RUN_QUERY, 50, None)):
+            kw = {"sort": sort} if sort else {}
+            res = self.client.recall(RecallParams(query=q, limit=n, namespace=self.namespace, **kw))
             for m in res.results:
                 rec = decode(m.text)
                 key = getattr(m, "blob_id", None) or m.text

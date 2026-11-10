@@ -1,4 +1,4 @@
-105 memories recalled; ledger snapshot from 2026-11-09 23:44 EST covering 15 runs
+122 memories recalled; ledger snapshot from 2026-11-09 23:46 EST covering 16 runs
 SEATS
   atlas                                            n=13  mean= 9.3 weight=1.75
   orion                                            n=10  mean= 8.8 weight=1.63
@@ -24,6 +24,7 @@ SOURCES
   hyperphysics.phy-astr.gsu.edu                    n=1   mean=10.0 weight=1.33
   metoffice.gov.uk                                 n=1   mean=10.0 weight=1.33
   ninds.nih.gov                                    n=1   mean=10.0 weight=1.33
+  nssl.noaa.gov                                    n=1   mean=10.0 weight=1.33
   pubmed.ncbi.nlm.nih.gov                          n=1   mean=10.0 weight=1.33
   scied.ucar.edu                                   n=1   mean=10.0 weight=1.33
   scijinks.gov                                     n=1   mean=10.0 weight=1.33
@@ -37,6 +38,7 @@ SOURCES
   sciencedirect.com                                n=1   mean= 9.0 weight=1.27
   solarsystem.nasa.gov                             n=1   mean= 9.0 weight=1.27
   usgs.gov                                         n=1   mean= 9.0 weight=1.27
+  weather.gov                                      n=1   mean= 9.0 weight=1.27
   health.harvard.edu                               n=2   mean= 7.5 weight=1.25
   scientificamerican.com                           n=2   mean= 7.5 weight=1.25
   canberra.gov.au                                  n=1   mean= 8.0 weight=1.20
@@ -53,12 +55,28 @@ SOURCES
   bbc.com                                          n=1   mean= 7.0 weight=1.13
   corning.com                                      n=1   mean= 7.0 weight=1.13
   history.com                                      n=1   mean= 7.0 weight=1.13
+  nps.gov                                          n=1   mean= 7.0 weight=1.13
   parliament.gov.au                                n=1   mean= 7.0 weight=1.13
   smithsonianmag.com                               n=1   mean= 7.0 weight=1.13
   ucar.edu                                         n=1   mean= 7.0 weight=1.13
-  nps.gov                                          n=1   mean= 7.0 weight=1.13
   abc.net.au                                       n=1   mean= 6.0 weight=1.07
   earthsky.org                                     n=2   mean= 4.0 weight=0.90
   universetoday.com                                n=2   mean= 2.5 weight=0.75
-LEARNING CURVE
-  (no runs yet)
+LEARNING CURVE (seat weights going into each run, recalled from memory)
+  time (local)      atlas   orion   vega    winner
+  11-09 18:28 EST   1.00    1.00    1.00    vega
+  11-09 18:32 EST   1.00    1.00    0.67    None
+  11-09 18:36 EST   1.00    1.00    0.67    orion
+  11-09 19:04 EST   1.27    1.33    0.90    atlas
+  11-09 19:06 EST   1.45    1.35    1.04    atlas
+  11-09 19:08 EST   1.52    1.44    1.20    atlas
+  11-09 19:11 EST   1.57    1.47    1.31    atlas
+  11-09 19:12 EST   1.63    1.49    1.38    orion
+  11-09 22:24 EST   1.60    1.52    1.38    atlas
+  11-09 23:23 EST   1.64    1.58    1.44    orion
+  11-09 23:28 EST   1.64    1.60    1.46    atlas
+  11-09 23:33 EST   1.68    1.60    1.48    atlas
+  11-09 23:37 EST   1.69    1.60    1.48    atlas
+  11-09 23:40 EST   1.72    1.60    1.51    atlas
+  11-09 23:44 EST   1.72    1.62    1.54    atlas
+  11-09 23:46 EST   1.74    1.62    1.53    atlas

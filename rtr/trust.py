@@ -71,11 +71,20 @@ def tallies(records: list[dict]) -> dict[str, dict[str, list[float]]]:
     return {s: dict(v) for s, v in out.items()}
 
 
+CURVE_POINTS = 100
+
+
 def snapshot(records: list[dict], ts: float, runs: int | None = None) -> dict:
-    """A ``ledger`` memory summarizing everything in ``records`` up to ``ts``."""
+    """A ``ledger`` memory summarizing everything in ``records`` up to ``ts``.
+
+    It also carries the last ``CURVE_POINTS`` points of the learning curve, so the
+    history survives even when old ``run`` memories fall out of recall.
+    """
     t = tallies(records)
     rows = {sec: {k: [round(v[0], 3), int(v[1])] for k, v in d.items() if v[1]} for sec, d in t.items()}
-    snap = {"kind": "ledger", "tallies": rows, "ts": ts}
+    curve = [[round(ts_, 3), w, {k: round(float(x), 3) for k, x in wb.items()}]
+             for ts_, w, wb in history(records)][-CURVE_POINTS:]
+    snap = {"kind": "ledger", "tallies": rows, "curve": curve, "ts": ts}
     if runs is not None:
         snap["runs"] = runs
     return snap
@@ -121,6 +130,15 @@ def demoted_routes(records: list[dict], below: float = 1.0, min_n: int = 2) -> d
 
 def history(records: list[dict]) -> list[tuple[float, str, dict[str, float]]]:
     """``(ts, winner, seat weights going into that run)`` for every remembered run, oldest first."""
-    runs = [r for r in records if r.get("kind") == "run" and isinstance(r.get("weights_before"), dict)]
-    return [(float(r.get("ts", 0)), str(r.get("winner")), r["weights_before"])
-            for r in sorted(runs, key=lambda r: float(r.get("ts", 0)))]
+    points: dict[float, tuple[float, str, dict[str, float]]] = {}
+    snap = latest_snapshot(records)
+    for item in (snap or {}).get("curve") or []:
+        try:
+            points[round(float(item[0]), 3)] = (float(item[0]), str(item[1]), dict(item[2]))
+        except (TypeError, ValueError, IndexError):
+            continue
+    for r in records:
+        if r.get("kind") == "run" and isinstance(r.get("weights_before"), dict):
+            ts = float(r.get("ts", 0))
+            points[round(ts, 3)] = (ts, str(r.get("winner")), r["weights_before"])
+    return [points[k] for k in sorted(points)]
