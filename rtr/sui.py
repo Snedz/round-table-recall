@@ -15,6 +15,8 @@ from __future__ import annotations
 import base64
 from dataclasses import dataclass, field
 
+import time
+
 import requests
 
 from . import config
@@ -63,7 +65,10 @@ class Proof:
 
 
 class TatumSui:
-    def __init__(self, network: str | None = None, session: requests.Session | None = None):
+    def __init__(self, network: str | None = None, session: requests.Session | None = None,
+                 retries: int = 4, backoff: float = 1.0):
+        self.retries = retries
+        self.backoff = backoff
         self.network = network or config.network()
         self.key = config.get(f"TATUM_API_KEY_{self.network.upper()}")
         self.url = TATUM_GQL[self.network]
@@ -72,8 +77,19 @@ class TatumSui:
     def query(self, query: str, variables: dict | None = None) -> dict:
         if not self.key:
             raise SuiRpcError("Tatum API key not configured")
-        r = self.http.post(self.url, json={"query": query, "variables": variables or {}},
-                           headers={"x-api-key": self.key, "content-type": "application/json"}, timeout=30)
+        # Free Tatum plans rate-limit (HTTP 429); back off and retry so paging
+        # through owned objects doesn't stop early and undercount blobs.
+        for attempt in range(self.retries + 1):
+            r = self.http.post(self.url, json={"query": query, "variables": variables or {}},
+                               headers={"x-api-key": self.key, "content-type": "application/json"}, timeout=30)
+            if r.status_code != 429 or attempt == self.retries:
+                break
+            wait = r.headers.get("retry-after")
+            try:
+                delay = float(wait) if wait else self.backoff * (2 ** attempt)
+            except ValueError:
+                delay = self.backoff * (2 ** attempt)
+            time.sleep(min(delay, 10.0))
         if r.status_code != 200:
             raise SuiRpcError(f"Tatum HTTP {r.status_code}")
         body = r.json()

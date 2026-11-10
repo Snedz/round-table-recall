@@ -107,3 +107,29 @@ def test_calibrate_source_scores_spreads_flat():
     assert out["nasa.gov"] > out["random-blog.xyz"]
     already = {"nasa.gov": 9.0, "blog.xyz": 3.0}
     assert calibrate_source_scores(already) == already
+
+
+def test_tatum_query_retries_on_429(monkeypatch):
+    from rtr import sui
+
+    class R:
+        def __init__(self, code, data=None):
+            self.status_code = code
+            self.headers = {}
+            self._data = data
+
+        def json(self):
+            return self._data
+
+    calls = []
+
+    class S:
+        def post(self, *a, **k):
+            calls.append(1)
+            return R(429) if len(calls) < 3 else R(200, {"data": {"ok": 1}})
+
+    monkeypatch.setattr(sui.time, "sleep", lambda s: None)
+    t = sui.TatumSui(network="mainnet", session=S(), retries=4, backoff=0)
+    t.key = "test"
+    assert t.query("{ ok }") == {"ok": 1}
+    assert len(calls) == 3
