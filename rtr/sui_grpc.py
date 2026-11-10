@@ -22,9 +22,7 @@ class TatumSuiGrpc:
         )
 
         self.network = network or config.network()
-        self.key = config.get(f"TATUM_API_KEY_{self.network.upper()}")
-        if not self.key:
-            raise RuntimeError("Tatum API key not configured")
+        self.key = config.get(f"TATUM_API_KEY_{self.network.upper()}")  # optional: anonymous plan if unset
         self.target = TATUM_GRPC[self.network]
         self.timeout = timeout
         self.channel = grpc.secure_channel(self.target, grpc.ssl_channel_credentials())
@@ -45,7 +43,8 @@ class TatumSuiGrpc:
         msg = json_format.ParseDict(request, req_cls())
         for attempt in range(5):  # the free Tatum plan allows 3 requests/s; back off on 429
             try:
-                resp = rpc(msg, metadata=[("x-api-key", self.key)], timeout=self.timeout)
+                meta = [("x-api-key", self.key)] if self.key else []
+                resp = rpc(msg, metadata=meta, timeout=self.timeout)
                 return json_format.MessageToDict(resp)
             except grpc.RpcError as e:
                 if "429" not in str(e.details() if hasattr(e, "details") else e) or attempt == 4:

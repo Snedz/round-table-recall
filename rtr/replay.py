@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
+
+from .sui import walruscan
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_RUN = ROOT / "preview" / "replay-run.txt"
@@ -29,8 +32,20 @@ def _clean(text: str) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
+_BLOB = re.compile(r"blob=([A-Za-z0-9_-]{43})(?![A-Za-z0-9_-])")
+
+
+def link_blobs(text: str) -> str:
+    """Append the Walruscan page to every line that shows a Walrus blob id."""
+    out = []
+    for line in text.splitlines():
+        m = _BLOB.search(line)
+        out.append(f"{line}  {walruscan(m.group(1))}" if m and "https://" not in line else line)
+    return "\n".join(out) + ("\n" if text.endswith("\n") else "")
+
+
 def run_transcript(path: Path | None = None) -> str:
-    return _clean((path or DEFAULT_RUN).read_text())
+    return link_blobs(_clean((path or DEFAULT_RUN).read_text()))
 
 
 def labeled_run(path: Path | None = None) -> str:
@@ -38,7 +53,7 @@ def labeled_run(path: Path | None = None) -> str:
 
 
 def proof_snapshot(path: Path | None = None) -> str:
-    return _clean((path or DEFAULT_PROOF).read_text())
+    return link_blobs(_clean((path or DEFAULT_PROOF).read_text()))
 
 
 def tracks_snapshot(path: Path | None = None) -> str:

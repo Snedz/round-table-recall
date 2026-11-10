@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import re
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs
@@ -21,14 +22,32 @@ input{{width:75%;padding:8px;background:#181b23;color:#eee;border:1px solid #333
 <h2>Proof the memory exists (Tatum Sui gateway)</h2><pre>{proof}</pre>"""
 
 
-def render_static(records: list[dict], last_run: str, proof: str, network: str, note: str) -> str:
+_URL = re.compile(r"\s+https://walruscan\.com/\S+")
+_BLOB_ID = re.compile(r"blob=([A-Za-z0-9_-]{43})(?![A-Za-z0-9_-])")
+_OBJ = re.compile(r"(?<![0-9a-fA-Fx])(0x[0-9a-f]{64})(?![0-9a-f])")
+
+
+def linkify(escaped: str, network: str = "mainnet") -> str:
+    """Make blob ids open on Walruscan and full Sui object ids open on Suiscan (input is already HTML-escaped)."""
+    from .sui import suiscan, walruscan
+
+    text = _URL.sub("", escaped)
+    text = _BLOB_ID.sub(lambda m: f'blob=<a href="{walruscan(m.group(1), network)}">{m.group(1)}</a>', text)
+    return _OBJ.sub(lambda m: f'<a href="{suiscan(m.group(1), network)}">{m.group(1)}</a>', text)
+
+
+def render_static(records: list[dict], last_run: str, proof: str, network: str, note: str,
+                  amnesia: str = "") -> str:
     """A read-only snapshot of the demo page (no form, no keys) for static hosting."""
     tracks = "\n".join([tracks_text("SEATS", trust.seat_tracks(records)),
                         tracks_text("MODELS", trust.model_tracks(records)),
                         tracks_text("SOURCES", trust.source_tracks(records)),
                         history_text(trust.history(records))])
-    body = PAGE.format(net=network, status=html.escape(note), last=html.escape(last_run),
-                       tracks=html.escape(tracks), proof=html.escape(proof))
+    body = PAGE.format(net=network, status=html.escape(note), last=linkify(html.escape(last_run), network),
+                       tracks=html.escape(tracks), proof=linkify(html.escape(proof), network))
+    if amnesia:
+        body += ("<h2>Amnesia test (local copy ignored, ledger rebuilt from Walrus, blobs checked via Tatum)</h2>"
+                 f"<pre>{html.escape(amnesia)}</pre>")
     start, end = body.index("<form"), body.index("</form>") + len("</form>")
     return body[:start] + "<p><b>Static snapshot</b> of a real Mainnet run. Run it yourself: see the README.</p>" + body[end:]
 
@@ -49,8 +68,9 @@ def serve(table: RoundTable, port: int = 8787) -> None:
             except Exception as e:  # the page should render even if the RPC is down  # noqa: BLE001
                 proof = f"proof unavailable: {e}"
             body = PAGE.format(net=config.network(), status="running..." if state["busy"] else "",
-                               last=html.escape(state["last"]), tracks=html.escape(tracks),
-                               proof=html.escape(proof)).encode()
+                               last=linkify(html.escape(state["last"]), config.network()),
+                               tracks=html.escape(tracks),
+                               proof=linkify(html.escape(proof), config.network())).encode()
             self.send_response(200)
             self.send_header("content-type", "text/html; charset=utf-8")
             self.end_headers()
@@ -92,9 +112,9 @@ def replay_page() -> str:
     body = PAGE.format(
         net="mainnet (replay)",
         status=html.escape(replay.NOTE),
-        last=html.escape(last),
+        last=linkify(html.escape(last)),
         tracks=html.escape(tracks),
-        proof=html.escape(proof),
+        proof=linkify(html.escape(proof)),
     )
     start, end = body.index("<form"), body.index("</form>") + len("</form>")
     return (

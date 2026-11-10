@@ -48,6 +48,8 @@ def _read_file_value(path: Path, var: str) -> str | None:
 
 def get(var: str) -> str | None:
     """Return a credential or setting, or ``None`` when it is not available."""
+    if var.startswith("TATUM_API_KEY") and os.environ.get("RTR_TATUM_KEYLESS") == "1":
+        return None  # force Tatum's anonymous plan: what a judge without a Tatum account sees
     val = os.environ.get(var)
     if val:
         return val.strip()

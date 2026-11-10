@@ -59,7 +59,7 @@ def proof_text(p: Proof) -> str:
              f"  delegate keys     : {p.delegate_key_count}",
              f"  Walrus Blob objects owned by owner: {p.blob_count}"]
     for b in p.blobs[:12]:
-        lines.append(f"    {short(b['object_id'])} blob={b['blob_id']} size={b['size']}")
+        lines.append(f"    {short(b['object_id'])} blob={b['blob_id']} size={b['size']}  {p.walruscan(b['blob_id'])}")
     for e in p.errors:
         lines.append(f"  ! {e}")
     return "\n".join(lines)

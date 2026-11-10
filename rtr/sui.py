@@ -1,7 +1,9 @@
 """Onchain proof that the memory exists, read through Tatum's Sui gateway.
 
-Tatum serves Sui over GraphQL (``https://sui-<network>.gateway.tatum.io/graphql``,
-``x-api-key`` header); Sui JSON-RPC on that gateway is retired. We read:
+Tatum serves Sui over GraphQL (``https://sui-<network>.gateway.tatum.io/graphql``);
+Sui JSON-RPC on that gateway returns 404. The ``x-api-key`` header is optional:
+without a key the gateway's anonymous plan answers (slower rate limit), so
+anyone can verify the proof with no signup. We read:
 
 1. the latest checkpoint (the gateway is live),
 2. the ``MemWalAccount`` object for our account id: type, version, owner,
@@ -22,7 +24,7 @@ from . import config
 
 TATUM_GQL = {"mainnet": "https://sui-mainnet.gateway.tatum.io/graphql",
              "testnet": "https://sui-testnet.gateway.tatum.io/graphql"}
-SUIVISION = {"mainnet": "https://suivision.xyz/object/", "testnet": "https://testnet.suivision.xyz/object/"}
+SUISCAN = {"mainnet": "https://suiscan.xyz/mainnet/object/", "testnet": "https://suiscan.xyz/testnet/object/"}
 WALRUSCAN = {"mainnet": "https://walruscan.com/mainnet/blob/", "testnet": "https://walruscan.com/testnet/blob/"}
 
 Q_CHECKPOINT = "{ checkpoint { sequenceNumber } }"
@@ -57,10 +59,20 @@ class Proof:
         return len(self.blobs)
 
     def explorer(self, object_id: str) -> str:
-        return SUIVISION.get(self.network, SUIVISION["mainnet"]) + object_id
+        return SUISCAN.get(self.network, SUISCAN["mainnet"]) + object_id
 
     def walruscan(self, blob_id: str) -> str:
-        return WALRUSCAN.get(self.network, WALRUSCAN["mainnet"]) + blob_id
+        return walruscan(blob_id, self.network)
+
+
+def walruscan(blob_id: str, network: str = "mainnet") -> str:
+    """Explorer page for one Walrus blob (the memory's encrypted bytes)."""
+    return WALRUSCAN.get(network, WALRUSCAN["mainnet"]) + blob_id
+
+
+def suiscan(object_id: str, network: str = "mainnet") -> str:
+    """Explorer page for one Sui object."""
+    return SUISCAN.get(network, SUISCAN["mainnet"]) + object_id
 
 
 class TatumSui:
@@ -72,15 +84,21 @@ class TatumSui:
         self.key = config.get(f"TATUM_API_KEY_{self.network.upper()}")
         self.url = TATUM_GQL[self.network]
         self.http = session or requests.Session()
+        if not self.key:  # the anonymous plan allows only a short burst; wait longer instead of undercounting
+            self.retries, self.max_delay = max(retries, 8), 20.0
+        else:
+            self.max_delay = 10.0
+
+    @property
+    def keyless(self) -> bool:
+        return not self.key
 
     def query(self, query: str, variables: dict | None = None) -> dict:
-        if not self.key:
-            raise SuiRpcError("Tatum API key not configured")
         # Free Tatum plans rate-limit (HTTP 429); back off and retry so paging
         # through owned objects doesn't stop early and undercount blobs.
         for attempt in range(self.retries + 1):
             r = self.http.post(self.url, json={"query": query, "variables": variables or {}},
-                               headers={"x-api-key": self.key, "content-type": "application/json"}, timeout=30)
+                               headers=self._headers(), timeout=30)
             if r.status_code != 429 or attempt == self.retries:
                 break
             wait = r.headers.get("retry-after")
@@ -88,7 +106,7 @@ class TatumSui:
                 delay = float(wait) if wait else self.backoff * (2 ** attempt)
             except ValueError:
                 delay = self.backoff * (2 ** attempt)
-            time.sleep(min(delay, 10.0))
+            time.sleep(min(delay, self.max_delay))
         if r.status_code != 200:
             raise SuiRpcError(f"Tatum HTTP {r.status_code}")
         body = r.json()
@@ -96,8 +114,15 @@ class TatumSui:
             raise SuiRpcError(f"Tatum GraphQL: {body['errors'][0].get('message')}")
         return body.get("data") or {}
 
+    def _headers(self) -> dict:
+        h = {"content-type": "application/json"}
+        if self.key:
+            h["x-api-key"] = self.key
+        return h
+
     def proof(self, account_id: str, max_pages: int = 10) -> Proof:
-        p = Proof(network=self.network, rpc=f"Tatum Sui gateway ({self.url})", account_id=account_id)
+        mode = "no API key, anonymous plan" if self.keyless else "API key"
+        p = Proof(network=self.network, rpc=f"Tatum Sui gateway ({self.url}, {mode})", account_id=account_id)
         try:
             p.checkpoint = str(self.query(Q_CHECKPOINT)["checkpoint"]["sequenceNumber"])
         except (SuiRpcError, KeyError, TypeError) as e:
@@ -124,7 +149,7 @@ class TatumSui:
                 try:
                     objs = self.query(Q_OWNED, {"owner": p.owner, "after": after})["address"]["objects"]
                 except (SuiRpcError, KeyError, TypeError) as e:
-                    p.errors.append(str(e))
+                    p.errors.append(f"blob paging stopped early, count is partial: {e}")
                     break
                 for n in objs["nodes"]:
                     c = n.get("contents") or {}

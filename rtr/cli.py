@@ -1,4 +1,4 @@
-"""Command line: ``python -m rtr {ask,replay,trust,proof,serve}``."""
+"""Command line: ``python -m rtr {ask,replay,trust,proof,amnesia,snapshot,serve}``."""
 
 from __future__ import annotations
 
@@ -111,6 +111,40 @@ def cmd_proof(args) -> int:
     return 0
 
 
+def cmd_amnesia(args) -> int:
+    """Rebuild the ledger from Walrus alone, compare with the local mirror, check every blob via Tatum."""
+    from .amnesia import amnesia_text, compare
+    from .sui import TatumSui
+
+    mirror_path = Path(args.mirror) if args.mirror else config.state_dir() / f"memory-{config.network()}.jsonl"
+    if not mirror_path.exists():
+        print(f"local mirror not found: {mirror_path} (pass --mirror)", file=sys.stderr)
+        return 2
+    t0 = time.time()
+    recalled = WalrusMemory.from_config().recall(limit=100)  # Walrus only: no mirror fallback
+    recall_s = time.time() - t0
+    mirror = JsonlMemory(mirror_path).recall(limit=10**9)
+    chain: set[str] | None = None
+    note = ""
+    account = config.get("MEMWAL_ACCOUNT_ID")
+    if account:
+        sui = TatumSui()
+        p = sui.proof(account)
+        if p.errors:
+            note = "(Tatum read incomplete: " + "; ".join(p.errors)[:160] + ")"
+        else:
+            chain = {b["blob_id"] for b in p.blobs}
+            note = "(Tatum GraphQL, " + ("no API key)" if sui.keyless else "API key)")
+    else:
+        note = "(MEMWAL_ACCOUNT_ID missing)"
+    seats, _ = default_seats()
+    a = compare(recalled, mirror, seats, chain, note)
+    print(f"=== {time.strftime('%Y-%m-%d %H:%M:%S %Z')} | network={config.network()} | "
+          f"read-only: recall + Tatum reads, no writes | Walrus recall took {recall_s:.1f}s ===")
+    print(amnesia_text(a, config.network()))
+    return 0 if a.ok else 1
+
+
 def cmd_snapshot(args) -> int:
     from .web import render_static
 
@@ -121,7 +155,8 @@ def cmd_snapshot(args) -> int:
     note = f"Snapshot taken {time.strftime('%Y-%m-%d %H:%M %Z')} from Walrus Memory ({config.network()})."
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(render_static(recs, last, proof, config.network(), note))
+    amnesia = Path(args.amnesia).read_text().strip() if args.amnesia else ""
+    out.write_text(render_static(recs, last, proof, config.network(), note, amnesia))
     print(f"wrote {out}")
     return 0
 
@@ -158,10 +193,14 @@ def main(argv: list[str] | None = None) -> int:
     a.set_defaults(fn=cmd_ask)
     sub.add_parser("trust", help="show remembered track records").set_defaults(fn=cmd_trust)
     sub.add_parser("proof", help="read the MemWal account and blobs via Tatum").set_defaults(fn=cmd_proof)
+    am = sub.add_parser("amnesia", help="forget the local copy: rebuild the ledger from Walrus, check blobs via Tatum")
+    am.add_argument("--mirror", help="local mirror to compare against (default: the state dir's jsonl)")
+    am.set_defaults(fn=cmd_amnesia)
     sn = sub.add_parser("snapshot", help="write a static read-only demo page")
     sn.add_argument("-o", "--out", default="docs/index.html")
     sn.add_argument("--last-run", help="ask log whose last run is shown")
     sn.add_argument("--proof", help="saved `rtr proof` output to embed")
+    sn.add_argument("--amnesia", help="saved `rtr amnesia` output to embed")
     sn.set_defaults(fn=cmd_snapshot)
     rpl = sub.add_parser("replay", help="print a recorded Mainnet run (no model or Tatum call)")
     rpl.add_argument("--file", help="alternate recorded-run transcript")

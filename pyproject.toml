@@ -1,12 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "round-table-recall"
 version = "0.1.0"
 description = "A research round table of free models that remembers, on Walrus Memory, which seats and sources it can trust."
 requires-python = ">=3.11"
-dependencies = ["memwal>=0.2.3", "requests>=2.31"]
+dependencies = [
+    "memwal==0.2.3",
+    "requests>=2.31",
+    "grpcio>=1.60",
+    "grpcio-reflection>=1.60",
+    "protobuf>=4.25",
+]
 
 [project.scripts]
 rtr = "rtr.cli:main"
 
+[tool.setuptools]
+packages = ["rtr"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]

@@ -254,3 +254,101 @@ def test_replay_page_has_no_live_form():
     assert "147 -&gt; 161" in page
     assert "<form" not in page
     assert "REPLAY OF A REAL MAINNET RUN" in page
+
+
+def _ledger_world():
+    """A mirror of every write, and what Walrus recall returns: the newest snapshot plus newer raw scores."""
+    old = [{"kind": "seat_score", "seat": s, "route": f"nim:{s}", "score": sc, "ts": float(i), "_blob_id": f"b{i:042d}"}
+           for i, (s, sc) in enumerate([("good", 9), ("bad", 2)] * 30)]
+    old += [{"kind": "source_score", "domain": "seo-farm.xyz", "score": 1, "ts": 61.0, "_blob_id": "s" * 43}]
+    snap = dict(trust.snapshot(old, ts=62.0, runs=30), _blob_id="L" * 43)
+    newer = [{"kind": "seat_score", "seat": "good", "route": "nim:good", "score": 8, "ts": 63.0, "_blob_id": "n" * 43}]
+    mirror = old + [snap] + newer
+    recalled = [snap] + newer + old[-3:]  # most old raw scores are no longer recalled
+    return mirror, recalled
+
+
+def test_amnesia_rebuilds_same_ledger_from_walrus_alone():
+    from rtr.amnesia import amnesia_text, compare
+
+    mirror, recalled = _ledger_world()
+    seats = [Seat("good", [Route("nim", "good"), Route("nim", "alt")]), Seat("bad", [Route("nim", "bad"), Route("nim", "alt")])]
+    chain = {r["_blob_id"] for r in mirror}
+    a = compare(recalled, mirror, seats, chain, "(test)")
+    assert a.same_ledger and a.all_onchain and a.ok, a.diffs
+    assert a.found_onchain == a.with_blob_id == len(recalled)
+    assert any("on probation" in e for e in a.effects)  # the rebuilt ledger still changes the next run
+    assert any("seo-farm.xyz" in e for e in a.effects)
+    text = amnesia_text(a)
+    assert "RESULT: PASS" in text and "0, identical" in text
+
+
+def test_amnesia_flags_lost_memory_and_missing_blob():
+    from rtr.amnesia import compare
+
+    mirror, recalled = _ledger_world()
+    seats = [Seat("good", [Route("nim", "good")]), Seat("bad", [Route("nim", "bad")])]
+    lossy = [r for r in recalled if r.get("kind") != "ledger"]  # snapshot lost: the old record is forgotten
+    a = compare(lossy, mirror, seats, {r["_blob_id"] for r in mirror})
+    assert not a.same_ledger and not a.ok
+    b = compare(recalled, mirror, seats, {"n" * 43})  # Tatum cannot find most recalled blobs
+    assert b.same_ledger and not b.all_onchain and len(b.missing) == len(recalled) - 1
+
+
+def test_tatum_proof_works_without_api_key(monkeypatch):
+    from rtr import sui
+
+    monkeypatch.setenv("RTR_TATUM_KEYLESS", "1")
+    sent = []
+
+    class Resp:
+        status_code, headers = 200, {}
+
+        def __init__(self, data):
+            self._d = data
+
+        def json(self):
+            return {"data": self._d}
+
+    class S:
+        def post(self, url, json, headers, timeout):
+            sent.append(headers)
+            q = json["query"]
+            if "checkpoint" in q:
+                return Resp({"checkpoint": {"sequenceNumber": 7}})
+            if "object(address" in q:
+                return Resp({"object": {"version": 1, "digest": "d", "asMoveObject": {"contents": {
+                    "type": {"repr": "0x1::account::MemWalAccount"},
+                    "json": {"owner": "0xowner", "active": True, "delegate_keys": [1]}}}}})
+            return Resp({"address": {"objects": {"nodes": [{"address": "0xb", "contents": {
+                "type": {"repr": "0x2::blob::Blob"}, "json": {"blob_id": "12345", "size": 9}}}],
+                "pageInfo": {"hasNextPage": False, "endCursor": None}}}})
+
+    t = sui.TatumSui(network="mainnet", session=S())
+    p = t.proof("0xacc")
+    assert t.keyless and not p.errors and p.blob_count == 1
+    assert all("x-api-key" not in h for h in sent)
+    assert "anonymous" in p.rpc
+
+
+def test_blob_ids_link_to_walruscan():
+    from rtr.replay import link_blobs, run_transcript
+    from rtr.web import linkify
+
+    bid = "pGiD_Lrwu_Fc0NVoiE1pSI-n123Nr6ydp3Kzl-dJSJY"
+    assert link_blobs(f"  done blob={bid} job=x").endswith("https://walruscan.com/mainnet/blob/" + bid)
+    assert "https://walruscan.com/mainnet/blob/" in run_transcript()
+    pkg = "0x" + "ab" * 32
+    html_ = linkify(f"blob={bid}  https://walruscan.com/mainnet/blob/{bid} type {pkg}::account::X")
+    assert f'href="https://walruscan.com/mainnet/blob/{bid}"' in html_
+    assert f'href="https://suiscan.xyz/mainnet/object/{pkg}"' in html_
+    assert html_.count("walruscan.com") == 1  # the plain URL is folded into the link
+
+
+def test_static_page_embeds_amnesia_and_links():
+    from rtr.web import render_static
+
+    bid = "pGiD_Lrwu_Fc0NVoiE1pSI-n123Nr6ydp3Kzl-dJSJY"
+    page = render_static([], f"done blob={bid}", "", "mainnet", "note", "RESULT: PASS")
+    assert "Amnesia test" in page and "RESULT: PASS" in page
+    assert f'href="https://walruscan.com/mainnet/blob/{bid}"' in page and "<form" not in page
