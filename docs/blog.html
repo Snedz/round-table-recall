@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Round Table Recall: a research agent that remembers who to trust</title>
+<style>
+  body {
+    background: #101218;
+    color: #e6e6e6;
+    font: 17px/1.55 ui-sans-serif, system-ui, sans-serif;
+    max-width: 760px;
+    margin: 32px auto;
+    padding: 0 20px 64px;
+  }
+  a { color: #78c8ff; }
+  h1, h2, h3 { color: #78c8ff; line-height: 1.25; }
+  h1 { font-size: 1.8rem; }
+  p, li { color: #ddd; }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88em; }
+  pre { background: #181b23; padding: 14px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; }
+  code { background: #181b23; padding: 0.1em 0.3em; border-radius: 4px; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92em; margin: 1em 0; }
+  th, td { border: 1px solid #333; padding: 6px 8px; text-align: left; }
+  th { background: #181b23; }
+  nav { font-size: 0.9rem; margin-bottom: 1.5rem; color: #999; }
+  .meta { color: #999; font-size: 0.9rem; margin-top: -0.5rem; }
+</style>
+<nav>
+  <a href="./">Live snapshot</a> ·
+  <a href="https://github.com/Snedz/round-table-recall">Repo</a> ·
+  <a href="https://youtu.be/CuF0kfMDOK8">Demo video</a>
+</nav>
+<h1>Round Table Recall: a research agent that remembers who to trust</h1>
+<p><strong>TL;DR:</strong> I built a research round table: three free AI models answer, a blind<br />
+critic grades them, and every grade is stored in <strong>Walrus Memory on Sui Mainnet</strong>.<br />
+The next run recalls that track record, and it changes what the table <em>does</em>:<br />
+the winner is weighted by remembered trust, weak models get demoted or put on<br />
+probation, and low-trust sources are named for every seat to avoid. A proof panel<br />
+reads the memory's onchain objects through <strong>Tatum's Sui gateway</strong> (GraphQL plus a<br />
+gRPC cross-check), and every run ends with a Tatum receipt showing the blob count<br />
+went up by exactly the number of memories written. Then I made it forget: with the<br />
+local copy ignored, the ledger rebuilt from Walrus alone matched every write ever<br />
+made, with zero differences, and Tatum found every recalled memory onchain. Anyone can<br />
+re-check the onchain part without even a Tatum account.</p>
+<h2>The problem</h2>
+<p>Multi-model "councils" are great at disagreeing and bad at remembering. Every<br />
+run starts from zero: the model that was wrong yesterday gets the same vote<br />
+today. Which model, and which source, has earned trust is exactly the context<br />
+that gets lost between sessions.</p>
+<p>That's a real-life problem for me, not a toy one. I run a planning loop where<br />
+several free models draft, critique and review each other's work. I<br />
+want the loop to remember which reviewer caught real problems last week and which<br />
+sources kept turning out to be weak, without keeping that in one app's database.</p>
+<h2>What it does</h2>
+<ol>
+<li>Three seats (each a failover chain of free models across NVIDIA NIM,<br />
+   OpenRouter and opencode Zen) answer a public research question and cite up to<br />
+   3 URLs.</li>
+<li>A critic seat grades the answers anonymized and shuffled, 0-10, and grades<br />
+   each cited source domain.</li>
+<li>Each grade becomes its own memory (<code>seat_score</code>, <code>source_score</code>, <code>run</code>) via<br />
+   the Walrus Memory Python SDK and the managed Mainnet relayer, plus one<br />
+<code>ledger</code> snapshot per run.</li>
+<li>The next run recalls those memories, computes a Bayesian track record per<br />
+   seat, model and source, and lets that record steer the run.</li>
+</ol>
+<h2>How memory changes the product</h2>
+<p>Before anyone answers, the table prints a <code>MEMORY CHANGED THIS RUN</code> block:</p>
+<ul>
+<li><strong>Sources it learned to distrust are named in every prompt, and removed if<br />
+  cited anyway.</strong> The critic had scored universetoday.com and earthsky.org below<br />
+  an unknown source, so later prompts told every seat not to cite them. Most runs<br />
+  came back clean. But on two questions (goldfish memory, bulls and red), the<br />
+  smallest model cited exactly those two domains, and one URL looked made up<br />
+  (<code>universetoday.com/12345/...</code>). Naming the domains had primed it. So the table<br />
+  now strips any distrusted source from an answer before the critic grades it,<br />
+  and the run log says which seat did it.</li>
+<li><strong>Models with a below-average record move to the back</strong> of their seat's<br />
+  failover chain.</li>
+<li><strong>A seat whose weight drops below 0.80 goes on probation</strong>, and its usual<br />
+  model is swapped out for that run.</li>
+<li><strong>The final pick is <code>critic score x remembered weight</code></strong>, so a seat that has<br />
+  been right for weeks beats a lucky newcomer on a tie.</li>
+</ul>
+<p>Recall only returns about 100 memories at a time, and I passed 100 tonight. A<br />
+naive ledger would have started quietly forgetting its oldest runs. So each run<br />
+also stores one <code>ledger</code> memory with running sums and counts, plus the<br />
+learning curve. The track record is rebuilt from <em>newest snapshot + newer<br />
+scores</em>. I checked it against a local mirror of every write: same counts<br />
+(atlas 15, vega 16, orion 12 scored answers after 17 runs).</p>
+<h2>How it uses Walrus</h2>
+<ul>
+<li><code>remember_bulk_and_wait</code> writes up to 20 memories per call. Each one is<br />
+  Seal-encrypted and stored as its own Walrus blob, owned by my Sui address.</li>
+<li><code>recall</code> brings the track record back on any machine that holds the delegate<br />
+  key. Three queries are merged: the main semantic query, a <code>sort="recent"</code><br />
+  query that always includes the newest ledger snapshot, and a run-summary<br />
+  query for the learning curve. There's no app database to lose.</li>
+<li>Cost: $0. The managed relayer covers WAL storage and SUI gas.</li>
+</ul>
+<h2>How it uses Tatum</h2>
+<ul>
+<li><strong>GraphQL</strong> on <code>sui-mainnet.gateway.tatum.io/graphql</code>, the Sui interface the<br />
+  gateway's <code>/_methods</code> lists, reads the latest checkpoint, the <code>MemWalAccount</code><br />
+  object (owner, delegate keys, active flag) and every <code>::blob::Blob</code> object the<br />
+  owner holds. It backs off on HTTP 429 so the free tier's 3 requests a second<br />
+  don't undercount.</li>
+<li><strong>gRPC</strong> on <code>sui-mainnet-grpc.gateway.tatum.io</code> (<code>sui.rpc.v2.LedgerService</code>,<br />
+  message types from server reflection) re-reads the account object. Its<br />
+  version and digest must match the GraphQL read.</li>
+<li><strong>Per-run receipt.</strong> After every Mainnet run the CLI re-counts the Blob<br />
+  objects through Tatum, for example "Walrus Blob objects 127 -&gt; 135 (+8); 8<br />
+  memory writes this run; matches".</li>
+</ul>
+<p>Anyone can verify it without trusting the app, and without a Tatum account. The<br />
+account id is public, and Tatum's Sui GraphQL answers without an API key on its<br />
+anonymous plan, so <code>MEMWAL_ACCOUNT_ID=&lt;id&gt; python -m rtr proof</code> reads the account<br />
+and all 161 blobs (about a minute, because it backs off on HTTP 429). The gRPC<br />
+cross-check also ran keyless. One honest note: the docs list Sui JSON-RPC, but on<br />
+the gateway it returns 404 with or without a key, so I didn't use it. GraphQL plus<br />
+gRPC is what works today. Every blob id in the output links to Walruscan.</p>
+<h2>How it learned over time</h2>
+<p>All times are Mon Nov 9 2026, ET. The learning curve below is recalled from<br />
+Walrus. Each row shows the seat weights going into a run.</p>
+<table>
+<thead>
+<tr>
+<th>run (ET)</th>
+<th>atlas</th>
+<th>orion</th>
+<th>vega</th>
+<th>winner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6:28 PM</td>
+<td>1.00</td>
+<td>1.00</td>
+<td>1.00</td>
+<td>vega (only seat that answered; scored 0)</td>
+</tr>
+<tr>
+<td>6:32 PM</td>
+<td>1.00</td>
+<td>1.00</td>
+<td>0.67</td>
+<td>(no scored answers)</td>
+</tr>
+<tr>
+<td>7:04 PM</td>
+<td>1.27</td>
+<td>1.33</td>
+<td>0.90</td>
+<td>atlas</td>
+</tr>
+<tr>
+<td>7:12 PM</td>
+<td>1.63</td>
+<td>1.49</td>
+<td>1.38</td>
+<td>orion</td>
+</tr>
+<tr>
+<td>11:23 PM</td>
+<td>1.64</td>
+<td>1.58</td>
+<td>1.44</td>
+<td>orion</td>
+</tr>
+<tr>
+<td>11:46 PM</td>
+<td>1.74</td>
+<td>1.62</td>
+<td>1.53</td>
+<td>atlas</td>
+</tr>
+<tr>
+<td>11:58 PM</td>
+<td>1.75</td>
+<td>1.65</td>
+<td>1.53</td>
+<td>atlas</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Run 0: every seat starts at 1.00.</li>
+<li>Vega's first answer (6:28 PM) echoed the prompt template and scored 0. Memory kept<br />
+  that: vega went into the next runs at 0.67 and had to earn its weight back.</li>
+<li>Source trust spread out: britannica.com 1.66 (n=9), NIH/NCBI 1.60, NASA Earth<br />
+  Observatory 1.52, while healthline.com fell to 0.93, earthsky.org to 0.88 and<br />
+  universetoday.com to 0.75.</li>
+<li>The model table records which free model actually answered. When the<br />
+  OpenRouter and Zen free quotas ran out at night, the seats failed over to NVIDIA<br />
+  NIM models, and those models built their own records.</li>
+<li>Tatum proof at the end: MemWalAccount active, <strong>161 Walrus Blob objects<br />
+  owned on Mainnet</strong>, one per memory, and the gRPC read of the account agrees<br />
+  with the GraphQL read (same version and digest).</li>
+</ul>
+<h2>Forgetting on purpose: the amnesia test</h2>
+<p>A memory layer is only worth something if you can lose the local copy. So<br />
+<code>python -m rtr amnesia</code> ignores the local mirror and rebuilds the whole ledger from<br />
+Walrus recall alone. Then it compares the result with the mirror, which holds<br />
+every memory ever written:</p>
+<pre><code>  Walrus-only recall       : 126 memories
+  local mirror (all writes): 161 memories
+  newest ledger snapshot   : 2026-11-09 23:58 EST, covering 17 runs
+
+  rebuilt ledger             walrus  mirror
+    seats                       3       3
+    models                      7       7
+    sources                    56      56
+  seat weights (walrus)    : atlas=1.753, vega=1.533, orion=1.643
+  what memory changes next run (rebuilt from Walrus):
+    - told every seat to avoid 3 low-trust domains: universetoday.com, earthsky.org, healthline.com
+  differences vs mirror    : 0, identical
+
+  TATUM CHECK: 126/126 recalled memories are Walrus Blob objects onchain (161 owned by the account owner) (Tatum GraphQL, no API key)
+</code></pre>
+<p>Walrus only returned 126 of the 161 memories, and that's fine. The ledger snapshot<br />
+plus newer scores carry the rest. Every seat, model and source domain comes back<br />
+with the same count and weight, and the next run would change in exactly the same<br />
+way. The check only calls <code>recall</code> and Tatum reads, and writes nothing. The full<br />
+output is <code>preview/amnesia.log</code> in the repo.</p>
+<h2>Try it</h2>
+<pre><code class="language-bash">git clone https://github.com/Snedz/round-table-recall &amp;&amp; cd round-table-recall
+python3 -m venv .venv &amp;&amp; . .venv/bin/activate &amp;&amp; pip install -r requirements.txt
+python -m rtr replay                                    # the recorded Mainnet run, no keys
+MEMWAL_ACCOUNT_ID=&lt;account id&gt; python -m rtr proof      # onchain proof via Tatum, no key needed
+pytest -q                                               # 27 tests, no network
+</code></pre>
+<h2>What's next</h2>
+<p>The memory layer is a tiny interface (<code>remember(records)</code>, <code>recall()</code>), so any<br />
+multi-model loop can reuse it. <code>rtr.adapters.council_records</code> already turns an<br />
+llm-council style peer ranking into ledger records, so a planning council can<br />
+remember which reviewer models catch real problems.</p>
+<p>Repo: https://github.com/Snedz/round-table-recall · Demo video: https://youtu.be/CuF0kfMDOK8 · Live snapshot: https://snedz.github.io/round-table-recall/ · Built for Walrus x Tatum "Total Recall".</p>
+<p class="meta">Published 10 Nov 2026 for the Walrus × Tatum Total Recall hackathon.</p>
+</html>
