@@ -1,0 +1,20 @@
+PROOF THE MEMORY EXISTS (mainnet) via Tatum Sui gateway (https://sui-mainnet.gateway.tatum.io/graphql)
+  latest checkpoint : 343580544
+  MemWalAccount     : 0xab914fd1…bdce5e
+  type              : 0xe7c16fbea0560e7057e2bf7422feaa4fb313749fc69c9e9092fac7a33b81d7f5::account::MemWalAccount
+  version / digest  : 1074813417 / 6SyEsc9DvP538QNDcMDLbdDs5JPZ2QhLRBeWVZ18YvMC
+  owner             : 0xc340cc68…1a0f83   active=True
+  delegate keys     : 1
+  Walrus Blob objects owned by owner: 77
+    0x04b03490…901ae5 blob=ms6h0qRLo_cN37w-kmg6Give3Y4E3mJP6GqsYyJMPw8 size=414
+    0x06b32188…16a4a4 blob=Ehj-iCMRx3JYfWnKw6kooPRPVWEpUZ13bxMwKMapDUk size=520
+    0x07827fc4…288ba2 blob=AX4XT96iI0JEMLVI9a2p_NOZ62vq2wY_D-1mBLfhLrA size=532
+    0x08cdfcdb…7036d0 blob=h_EYI8-S1_BMJEMMrqHVPTPlW3zULfGGKUMOxihM9Ww size=546
+    0x0c7985e2…9dcec9 blob=FE9il8MO7lL9nrPdMy382-EMLl0AwpFhl_OzsipXryQ size=522
+    0x0d8505cc…10e055 blob=soCFKQBqwjLWem6nDf7gahZDy2fn-wHJOs1HVK0j8lI size=408
+    0x0fb80540…51338f blob=LTSgLNYwAN7rgIiNqxrbwmo2TwNA9uZvTmRKjXi16Eg size=400
+    0x11a1eaab…b4649b blob=URX8GPKPVIU-ehfrD4XQLxstOXvS5WmYmtfTLr3S0Ew size=407
+    0x17997e62…88f16c blob=y4fxFWOlBIT3JfsexmdmNO4wjHdbfcvcyetWYlzfF78 size=514
+    0x1fdff0c1…0b05e6 blob=S723jTayXRY_r8sbE-Iv-69JNTYmpiTciwK-xGZdgB0 size=400
+    0x29ded255…9eac8b blob=UZXw40jRGLXWXX2_BtFYtzdOrCUJEbM91vK7CU7KMuE size=400
+    0x391eb8c8…d3bf11 blob=mnQrPI3kMl-FNHWE6132V5OSFAaqvMdMKlk91Lc4oGk size=501
