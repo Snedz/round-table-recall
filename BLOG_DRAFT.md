@@ -8,13 +8,21 @@ the winner is weighted by remembered trust, weak models get demoted or put on
 probation, and low-trust sources are named for every seat to avoid. A proof panel
 reads the memory's onchain objects through **Tatum's Sui gateway** (GraphQL plus a
 gRPC cross-check), and every run ends with a Tatum receipt showing the blob count
-went up by exactly the number of memories written.
+went up by exactly the number of memories written. Then I made it forget: with the
+local copy ignored, the ledger rebuilt from Walrus alone matched every write ever
+made, with zero differences, and Tatum found every recalled memory onchain. Anyone can
+re-check the onchain part without even a Tatum account.
 
 ## The problem
 Multi-model "councils" are great at disagreeing and bad at remembering. Every
 run starts from zero: the model that was wrong yesterday gets the same vote
 today. Which model, and which source, has earned trust is exactly the context
 that gets lost between sessions.
+
+That's a real-life problem for me, not a toy one. I run a planning loop where
+several free models draft, critique and review each other's work. I
+want the loop to remember which reviewer caught real problems last week and which
+sources kept turning out to be weak, without keeping that in one app's database.
 
 ## What it does
 1. Three seats (each a failover chain of free models across NVIDIA NIM,
@@ -75,8 +83,13 @@ scores*. I checked it against a local mirror of every write: same counts
   objects through Tatum, for example "Walrus Blob objects 127 -> 135 (+8); 8
   memory writes this run; matches".
 
-Anyone can verify it without trusting the app. The account id is public, so
-run `python -m rtr proof` with your own free Tatum key.
+Anyone can verify it without trusting the app, and without a Tatum account. The
+account id is public, and Tatum's Sui GraphQL answers without an API key on its
+anonymous plan, so `MEMWAL_ACCOUNT_ID=<id> python -m rtr proof` reads the account
+and all 161 blobs (about a minute, because it backs off on HTTP 429). The gRPC
+cross-check also ran keyless. One honest note: the docs list Sui JSON-RPC, but on
+the gateway it returns 404 with or without a key, so I didn't use it. GraphQL plus
+gRPC is what works today. Every blob id in the output links to Walruscan.
 
 ## How it learned over time
 All times are Mon Nov 9 2026, ET. The learning curve below is recalled from
@@ -105,10 +118,48 @@ Walrus. Each row shows the seat weights going into a run.
   owned on Mainnet**, one per memory, and the gRPC read of the account agrees
   with the GraphQL read (same version and digest).
 
+## Forgetting on purpose: the amnesia test
+A memory layer is only worth something if you can lose the local copy. So
+`python -m rtr amnesia` ignores the local mirror and rebuilds the whole ledger from
+Walrus recall alone. Then it compares the result with the mirror, which holds
+every memory ever written:
+
+```
+  Walrus-only recall       : 126 memories
+  local mirror (all writes): 161 memories
+  newest ledger snapshot   : 2026-11-09 23:58 EST, covering 17 runs
+
+  rebuilt ledger             walrus  mirror
+    seats                       3       3
+    models                      7       7
+    sources                    56      56
+  seat weights (walrus)    : atlas=1.753, vega=1.533, orion=1.643
+  what memory changes next run (rebuilt from Walrus):
+    - told every seat to avoid 3 low-trust domains: universetoday.com, earthsky.org, healthline.com
+  differences vs mirror    : 0, identical
+
+  TATUM CHECK: 126/126 recalled memories are Walrus Blob objects onchain (161 owned by the account owner) (Tatum GraphQL, no API key)
+```
+
+Walrus only returned 126 of the 161 memories, and that's fine. The ledger snapshot
+plus newer scores carry the rest. Every seat, model and source domain comes back
+with the same count and weight, and the next run would change in exactly the same
+way. The check only calls `recall` and Tatum reads, and writes nothing. The full
+output is `preview/amnesia.log` in the repo.
+
+## Try it
+```bash
+git clone https://github.com/Snedz/round-table-recall && cd round-table-recall
+python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+python -m rtr replay                                    # the recorded Mainnet run, no keys
+MEMWAL_ACCOUNT_ID=<account id> python -m rtr proof      # onchain proof via Tatum, no key needed
+pytest -q                                               # 27 tests, no network
+```
+
 ## What's next
 The memory layer is a tiny interface (`remember(records)`, `recall()`), so any
 multi-model loop can reuse it. `rtr.adapters.council_records` already turns an
 llm-council style peer ranking into ledger records, so a planning council can
 remember which reviewer models catch real problems.
 
-Repo: https://github.com/Snedz/round-table-recall · Demo video: _link once uploaded_ · Live snapshot: _GitHub Pages link if enabled_ · Built for Walrus x Tatum "Total Recall".
+Repo: https://github.com/Snedz/round-table-recall · Demo video: [[VIDEO_URL]] · Live snapshot: [[PAGES_URL]] · Built for Walrus x Tatum "Total Recall".
