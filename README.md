@@ -71,7 +71,12 @@ Each memory is one line, `RTR1 {json}`, with `kind` set to `seat_score`, `source
 
 ```bash
 python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
-# credentials: env vars, or files of the same lowercase name in $RTR_SECRETS_DIR
+
+# no keys needed: replay a recorded Mainnet run (the judge-safe path)
+python -m rtr replay                         # transcript + Tatum proof from 2026-11-09 23:56 ET
+python -m rtr serve --replay                 # http://127.0.0.1:8787, live ask off
+
+# credentials for a live run: env vars, or files of the same lowercase name in $RTR_SECRETS_DIR
 export MEMWAL_ACCOUNT_ID=... MEMWAL_PRIVATE_KEY=...      # Walrus Memory delegate key (never the owner key)
 export TATUM_API_KEY_MAINNET=...                         # free Tatum key
 export NVIDIA_API_KEY=... OPENROUTER_API_KEY=...         # free model tiers
@@ -84,7 +89,7 @@ python -m rtr proof                          # onchain proof via Tatum
 python -m rtr serve                          # http://127.0.0.1:8787
 python -m rtr snapshot --last-run preview/run6-strip-check.log --proof preview/proof6.log   # static docs/index.html
 python -m rtr --memory jsonl ask ...         # offline: local memory only
-pytest -q                                    # 20 tests, no network
+pytest -q                                    # 22 tests, no network
 ```
 
 ## Evidence in this repo
@@ -95,6 +100,7 @@ pytest -q                                    # 20 tests, no network
 - `preview/trust6.log`: the recalled track record and learning curve. `preview/proof6.log`: the Tatum
   GraphQL proof (161 Blob objects) plus the gRPC cross-check. `preview/tatum_gateway_methods.txt`: what the
   Tatum Sui gateway exposes.
+- `preview/replay-run.txt`: the recorded Mainnet run used by `python -m rtr replay` and `python -m rtr serve --replay` (147→161 blobs, all three seats, Tatum receipt matched).
 - `docs/index.html`: a static, read-only snapshot of the demo page.
 
 ## Reuse (dual use)

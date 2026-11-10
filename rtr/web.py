@@ -80,3 +80,44 @@ def serve(table: RoundTable, port: int = 8787) -> None:
 
     print(f"Round Table Recall on http://127.0.0.1:{port}")
     ThreadingHTTPServer(("127.0.0.1", port), H).serve_forever()
+
+
+def replay_page() -> str:
+    """Read-only demo page built from the recorded Mainnet run. No keys, no network."""
+    from . import replay
+
+    last = replay.labeled_run()
+    tracks = replay.tracks_snapshot()
+    proof = replay.proof_snapshot()
+    body = PAGE.format(
+        net="mainnet (replay)",
+        status=html.escape(replay.NOTE),
+        last=html.escape(last),
+        tracks=html.escape(tracks),
+        proof=html.escape(proof),
+    )
+    start, end = body.index("<form"), body.index("</form>") + len("</form>")
+    return (
+        body[:start]
+        + "<p><b>Replay mode.</b> This page is a recording of a real Mainnet run. "
+        "Live ask is off so a rate limit cannot break the demo. "
+        "Use <code>python -m rtr serve</code> with keys for a live run.</p>"
+        + body[end:]
+    )
+
+
+def serve_replay(port: int = 8787) -> None:
+    body = replay_page().encode()
+
+    class H(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            self.send_response(200)
+            self.send_header("content-type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *a) -> None:
+            pass
+
+    print(f"Round Table Recall replay on http://127.0.0.1:{port}")
+    ThreadingHTTPServer(("127.0.0.1", port), H).serve_forever()

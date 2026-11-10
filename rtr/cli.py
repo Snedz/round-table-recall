@@ -1,4 +1,4 @@
-"""Command line: ``python -m rtr {ask,demo,trust,proof,serve}``."""
+"""Command line: ``python -m rtr {ask,replay,trust,proof,serve}``."""
 
 from __future__ import annotations
 
@@ -126,11 +126,25 @@ def cmd_snapshot(args) -> int:
     return 0
 
 
-def cmd_serve(args) -> int:
-    from .web import serve
+def cmd_replay(args) -> int:
+    from .replay import labeled_run, proof_snapshot
 
+    path = Path(args.file) if args.file else None
+    print(labeled_run(path))
+    print()
+    print(proof_snapshot())
+    return 0
+
+
+def cmd_serve(args) -> int:
+    from .web import serve, serve_replay
+
+    if args.replay:
+        serve_replay(port=args.port)
+        return 0
     serve(build_table(args.memory), port=args.port)
     return 0
+
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -149,8 +163,12 @@ def main(argv: list[str] | None = None) -> int:
     sn.add_argument("--last-run", help="ask log whose last run is shown")
     sn.add_argument("--proof", help="saved `rtr proof` output to embed")
     sn.set_defaults(fn=cmd_snapshot)
+    rpl = sub.add_parser("replay", help="print a recorded Mainnet run (no model or Tatum call)")
+    rpl.add_argument("--file", help="alternate recorded-run transcript")
+    rpl.set_defaults(fn=cmd_replay)
     s = sub.add_parser("serve", help="minimal demo web page")
     s.add_argument("--port", type=int, default=8787)
+    s.add_argument("--replay", action="store_true", help="serve the recorded Mainnet run; no keys, no live ask")
     s.set_defaults(fn=cmd_serve)
     args = p.parse_args(argv)
     return args.fn(args)

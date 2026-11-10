@@ -1,0 +1,39 @@
+=== 2026-11-09 23:56:46 EST | network=mainnet | memory=walrus+jsonl ===
+QUESTION [fca2c17c5d1b]: Do we lose most of our body heat through our heads?
+
+Seat weights from memory (before this run): atlas=1.75, vega=1.53, orion=1.65
+MEMORY CHANGED THIS RUN:
+  - told every seat to avoid 2 low-trust domains: universetoday.com, earthsky.org
+  - low-trust sources cited anyway, removed before grading: none
+
+  [atlas] answer A via nim:nvidia/nemotron-3-ultra-550b-a55b (60.0s)  critic score: 9.0/10
+     No, we do not lose most body heat through the head. Heat loss is proportional to exposed surface area; the head accounts for about 7–10 % of total body surface area and loses roughly that fraction of heat when uncovered. The myth originated from a 1950s U.S. Army survival manual that misinterpreted data from subjects wearing arctic clothing without hats, making the head the only exposed area. Later controlled studies
+     sources: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1769544/, https://www.bmj.com/content/337/bmj.a2769, https://www.nature.com/articles/s41598-017-17525-4
+  [vega] answer B via nim:nvidia/nemotron-3.5-lightning-30b-a3b (3.6s)  critic score: 8.0/10
+     No, heat loss is proportional to exposed surface area. The head represents about 7-10% of body surface area, so it accounts for roughly 7-10% of heat loss when uncovered. The myth likely stems from military survival studies where participants wore insulated suits but lost significant heat through their heads, creating a misleading association. In reality, any uncovered body part loses heat at a rate proportional to i
+     sources: https://www.mayoclinic.org/healthy-lifestyle/adult-health/in-depth/body-temperature/art-20045690, https://www.healthline.com/health/do-we-lose-most-body-heat-through-our-heads, https://www.clevelandclinic.org/health/articles/do-you-lose-body-heat-through-your-head
+  [orion] answer C via nim:minimaxai/minimax-m3.1-flash (13.9s)  critic score: 8.0/10
+     No. The common misconception is that the head is a major heat-loss “vent,” but heat escapes from exposed skin in proportion to its surface area. A head accounts for roughly 7–10% of adult skin surface, so it loses heat at about the same rate per square centimeter as other exposed areas—not disproportionately. In ordinary conditions, most heat loss occurs through the skin, with smaller contributions from breathing and
+     sources: https://www.nhs.uk/conditions/hypothermia/, https://www.britannica.com/science/human-body/Thermoregulation, https://www.merckmanuals.com/professional/endocrine-disorders/endocrine-metabolic-disorders/hypothermia
+
+CRITIC via nim:nvidia/nemotron-3-ultra-550b-a55b: Answer A provides the most precise historical origin of the myth (1950s U.S. Army manual) and cites primary research literature directly addressing the misconception.
+Source scores: ncbi.nlm.nih.gov=10, bmj.com=9, nature.com=9, mayoclinic.org=8, clevelandclinic.org=7, healthline.com=4, nhs.uk=9, britannica.com=9, merckmanuals.com=8
+WINNER (critic score x remembered weight): atlas
+Seat weights after this run: atlas=1.75, vega=1.53, orion=1.64
+
+MEMORY WRITES -> walrus+jsonl: 14/14 done
+  done     blob=pGiD_Lrwu_Fc0NVoiE1pSI-n123Nr6ydp3Kzl-dJSJY job=21a415…f07516
+  done     blob=vT80oMs_3wbzzNo9hSN63fh-ve5uRgN2C0Ey78BVN2o job=a77848…4ac19a
+  done     blob=BB2dNmL0Qco7d9I8ZV5w14l9I-aKA5w5BFtwFsWsGiM job=1c38c8…a15d5f
+  done     blob=nI-VuZuSrn5GPOHdOAqWihGL6pglvjlXOWBg1rvMd9M job=5356e6…d586ae
+  done     blob=ASyCA0DeGXSAlIXAOANDje3ijLJs8nUP34BLV8KWT3Y job=612bbb…90af81
+  done     blob=GaO-g8BQKNlMT0NAVcqee6IKPivkv9b_FEzsopX7rfs job=477ca3…2f341c
+  done     blob=h63_tQQJvxuQILHWcxB0fZ3rSCkI3LpmCqDq1SB1okU job=563ad2…18a045
+  done     blob=ulGaorqO7WIYwZ2gR14DeMqd7oENBy8BD20R63pTirI job=4facd6…c3782c
+  done     blob=c4pC6_TieD0aPbLuMxhi5QCr7h8XOSemgDn0jy2gA5w job=66056b…8a8371
+  done     blob=ekWjIkYkN-aihkEtsYMhj4Q2hvDcLsdNDD6DJXvzIO0 job=643ad9…c50440
+  done     blob=cXPUfVxyjZEsSKjUipjm-46Nnh9i446XJoaEbEBTZCk job=75881b…ee7a2c
+  done     blob=IQzwGzq0dQ4Vy3NpeCcVeUM-SCMA0bHmVrbVK2jtKCk job=a819be…f4d998
+  done     blob=MmYW109zINjGgRsLSWtRwteQEpL1YrpxKDOzYeVwS2w job=cbeb70…2777c2
+  done     blob=_NSX5uTU3IaaU91PgiEsCPbnBzFvbnH-SqsoA3ivmkI job=98af3e…427d16
+TATUM RECEIPT (Sui Mainnet via Tatum): Walrus Blob objects 147 -> 161 (+14); 14 memory writes this run; matches

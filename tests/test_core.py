@@ -230,3 +230,27 @@ def test_low_trust_sources_are_removed_before_grading(tmp_path):
     r = table.run("What is the capital of Australia?")
     assert r.seats[0].sources == ["https://www.britannica.com/x"]
     assert any("s: seo-farm.xyz" in e for e in r.effects)
+
+
+def test_replay_of_recorded_mainnet_run():
+    from rtr.replay import labeled_run, proof_snapshot
+
+    text = labeled_run()
+    assert "REPLAY OF A REAL MAINNET RUN" in text
+    assert "MEMORY CHANGED THIS RUN" in text
+    assert "147 -> 161" in text
+    assert "Do we lose most of our body heat through our heads?" in text
+    proof = proof_snapshot()
+    assert "161" in proof
+    assert "gRPC" in proof
+    assert "DONE" not in proof
+
+
+def test_replay_page_has_no_live_form():
+    from rtr.web import replay_page
+
+    page = replay_page()
+    assert "Replay mode" in page
+    assert "147 -&gt; 161" in page
+    assert "<form" not in page
+    assert "REPLAY OF A REAL MAINNET RUN" in page
